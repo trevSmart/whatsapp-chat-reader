@@ -401,6 +401,7 @@ class ProgressiveVirtualHTMLGenerator:
                 this.currentOffset = 0;
                 this.isEndOfFile = false;
                 this.totalMessages = 0;
+                this.serverTotalMessages = null; // Total messages from server
 
                 this.init();
             }}
@@ -459,6 +460,12 @@ class ProgressiveVirtualHTMLGenerator:
                         this.currentOffset += data.messages.length;
                         this.totalMessages += data.messages.length;
 
+                        // Store the total messages count from server (only on first load)
+                        if (data.total_messages && !this.serverTotalMessages) {{
+                            this.serverTotalMessages = data.total_messages;
+                            console.log(`Total messages in chat: ${{this.serverTotalMessages}}`);
+                        }}
+
                         console.log(`Loaded ${{data.messages.length}} messages, total: ${{this.allMessages.length}}`);
 
                         // Update filtered messages if search is active
@@ -485,14 +492,22 @@ class ProgressiveVirtualHTMLGenerator:
             }}
 
             updateProgress() {{
-                // Simple progress based on loaded messages
-                const progress = Math.min(100, (this.totalMessages / 1000) * 100); // Assume ~1000 messages for 100%
-                this.progressFill.style.width = `${{progress}}%`;
+                // Calculate progress based on actual total messages from server
+                if (this.serverTotalMessages && this.serverTotalMessages > 0) {{
+                    const progress = Math.min(100, (this.totalMessages / this.serverTotalMessages) * 100);
+                    this.progressFill.style.width = `${{progress}}%`;
+                    console.log(`Progress: ${{this.totalMessages}}/${{this.serverTotalMessages}} (${{progress.toFixed(1)}}%)`);
+                }} else {{
+                    // Fallback: show progress based on loaded messages (for backwards compatibility)
+                    const progress = Math.min(100, (this.totalMessages / 1000) * 100);
+                    this.progressFill.style.width = `${{progress}}%`;
+                }}
             }}
 
             updateStats() {{
+                const totalInfo = this.serverTotalMessages ? `${{this.totalMessages}}/${{this.serverTotalMessages}}` : `${{this.totalMessages}}`;
                 this.stats.innerHTML = `
-                    Missatges carregats: ${{this.totalMessages}} |
+                    Missatges: ${{totalInfo}} |
                     Adjunts: ${{this.getTotalAttachments()}} |
                     Cerca: ${{this.searchQuery ? 'Activa' : 'Inactiva'}}
                 `;
@@ -557,7 +572,7 @@ class ProgressiveVirtualHTMLGenerator:
 
                 // Restore scroll position
                 this.messagesContainer.scrollTop = currentScrollTop;
-                
+
                 // Update last scroll height to prevent infinite loops
                 this.lastScrollHeight = this.messagesContainer.scrollHeight;
             }}
@@ -671,7 +686,7 @@ class ProgressiveVirtualHTMLGenerator:
                     reader.onload = () => {{
                         const container = document.getElementById(attachmentId);
                         const placeholder = container?.previousElementSibling;
-                        
+
                         if (!container) {{
                             console.warn(`Container ${{attachmentId}} not found`);
                             return;
@@ -691,7 +706,7 @@ class ProgressiveVirtualHTMLGenerator:
                         if (placeholder) {{
                             placeholder.style.display = 'none';
                         }}
-                        
+
                         // Store both the flag and the actual content for restoration
                         this.loadedAttachments.set(attachmentId, true);
                         this.loadedAttachmentsContent.set(attachmentId, {{ content: contentHtml, type: type }});
@@ -721,7 +736,7 @@ class ProgressiveVirtualHTMLGenerator:
                         // Restore the content
                         container.innerHTML = data.content;
                         container.style.display = 'block';
-                        
+
                         // Hide placeholder
                         const placeholder = container.previousElementSibling;
                         if (placeholder && placeholder.classList.contains('attachment-placeholder')) {{
@@ -766,8 +781,8 @@ class ProgressiveVirtualHTMLGenerator:
                 // 2. Not at end of file
                 // 3. Scroll position is at 80% or more
                 // 4. Scroll height has not changed since last check (prevents load during rendering)
-                if (!this.isLoading && 
-                    !this.isEndOfFile && 
+                if (!this.isLoading &&
+                    !this.isEndOfFile &&
                     scrollTop + clientHeight >= scrollHeight * 0.8 &&
                     scrollHeight === this.lastScrollHeight) {{
                     console.log('Scroll ended, loading more messages...');
