@@ -1,32 +1,71 @@
-# Copilot setup — WhatsApp Chat Reader
-
-Instruccions mínimes per preparar l'entorn amb GitHub Copilot.
-
-## Prerequisits
-- Tenir GitHub Copilot activat al teu compte GitHub.
-- Disposar de Python 3.8+ instal·lat.
-
-## Passos ràpids
-1. Clonar el repositori
-   ```bash
-   git clone https://github.com/trevSmart/whatsapp-chat-reader.git
-   cd whatsapp-chat-reader
-   ```
-
-2. Crear i activar entorn virtual
-   ```bash
-   python3 -m venv venv_new
-   source venv_new/bin/activate
-   ```
-
-3. Instal·lar Flask
-   ```bash
-   pip install flask
-   ```
-
-4. Activar Copilot a l'IDE
-- Inicia sessió amb GitHub i habilita Copilot a la configuració de l'IDE.
-
-## Recursos
-- Documentació de Copilot: https://docs.github.com/en/copilot
-- README del projecte: https://github.com/trevSmart/whatsapp-chat-reader/blob/main/README.md
+version: 1
+copilot:
+  assistant:
+    language: ca  # Comunicació amb l'usuari en Català
+    code_language: en  # Codi (noms i comentaris) en Anglès
+    style:
+      code_naming: camelCase
+      comments: only_non_obvious
+      verbosity: high_readability
+    communication:
+      default_language: ca
+      markdown:
+        headings: "##/### only"
+        bold_for_highlights: true
+        code_references: true
+      diagrams:
+        tool: mermaid
+        export:
+          format: png
+          open_command: open
+  rules:
+    - "Never modify files outside the repository root."
+    - "Use tmp/ for temporary files and delete them when no longer needed."
+    - "Do not expose internal implementation details in README or user docs."
+    - "When showing existing code, use code references with: ```startLine:endLine:filepath ...```."
+    - "For new or proposed code, use standard fenced blocks with a language tag."
+    - "Use backticks for file, directory, class and function names."
+    - "All code entities must be in English and use camelCase."
+  tasks:
+    - name: Setup environment
+      steps:
+        - "python3 -m venv venv_new"
+        - "source venv_new/bin/activate"
+        - "pip install -r requirements.txt"
+    - name: Run server (local test dataset)
+      steps:
+        - "source venv_new/bin/activate"
+        - "python3 progressive_server.py \"tests/real-example-test/_chat.txt\" --attachments \"tests/real-example-test\" --chat-name \"Test Chat\" --port 8080"
+        - "open http://localhost:8080"
+    - name: Run tests
+      steps:
+        - "source venv_new/bin/activate"
+        - "pytest -q"
+  guardrails:
+    file_modification:
+      forbidden_paths:
+        - "venv_new/"
+        - "src/whatsapp_chat_reader.egg-info/"
+      allowed_temporary_dir: "tmp/"
+    performance:
+      avoid:
+        - "Single huge HTML pages embedding all messages"
+      prefer:
+        - "Progressive server returning 50-message chunks"
+        - "Virtual scrolling rendering only visible messages"
+        - "Scroll debounce of 300ms and throttled re-rendering"
+    pull_requests:
+      commit_style: "concise, imperative"
+      title_prefix: "Copilot:"
+      require_status_checks: false
+  knowledge:
+    key_endpoints:
+      - "GET /api/messages"
+      - "GET /api/attachment/<filename>"
+      - "GET /api/stats"
+    run_commands:
+      activate: "source venv_new/bin/activate"
+      server_default_chat: "python3 progressive_server.py \"_chat.txt\" --attachments \"./adjunts\" --chat-name \"El meu xat\" --port 8080"
+      server_test_chat: "python3 progressive_server.py \"tests/real-example-test/_chat.txt\" --attachments \"tests/real-example-test\" --chat-name \"Test Chat\" --port 8080"
+    testing_example:
+      path: "tests/real-example-test/"
