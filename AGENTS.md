@@ -31,7 +31,7 @@
 source venv_new/bin/activate
 
 # Executar servidor
-python3 progressive_server.py "chat.txt" --attachments "./adjunts" --chat-name "El meu xat" --port 8080
+python3 progressive_server.py "_chat.txt" --attachments "./adjunts" --chat-name "El meu xat" --port 8080
 ```
 
 ### 2. Càrrega Inicial
@@ -244,7 +244,7 @@ pip install flask flask-cors
 ### Ús
 ```bash
 # Executar servidor
-python3 progressive_server.py "chat.txt" --attachments "./adjunts" --chat-name "El meu xat" --port 8080
+python3 progressive_server.py "_chat.txt" --attachments "./adjunts" --chat-name "El meu xat" --port 8080
 
 # Obrir navegador
 open http://localhost:8080
@@ -264,7 +264,7 @@ El directori `tests/real-example-test/` conté un exemple real d'un xat de Whats
 #### Ús de l'Exemple de Test
 ```bash
 # Executar servidor amb l'exemple de test
-python3 progressive_server.py "tests/real-example-test/chat.txt" --attachments "tests/real-example-test" --chat-name "Test Chat" --port 8080
+python3 progressive_server.py "tests/real-example-test/_chat.txt" --attachments "tests/real-example-test" --chat-name "Test Chat" --port 8080
 
 # Obrir navegador per provar
 open http://localhost:8080
