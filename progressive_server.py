@@ -217,7 +217,8 @@ def get_time_range():
             'total_messages': len(all_messages)
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        logging.exception("Unhandled exception in get_time_range")
+        return jsonify({'error': 'An internal error has occurred.'}), 500
 
 @app.route('/api/messages-by-time')
 def get_messages_by_time():
