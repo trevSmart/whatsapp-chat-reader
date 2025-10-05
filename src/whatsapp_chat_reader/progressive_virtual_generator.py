@@ -237,7 +237,7 @@ class ProgressiveVirtualHTMLGenerator:
 
             .segment-indicator {
                 width: 100%;
-                height: 8px;
+                height: 4px;
                 background: #e0e0e0;
                 border-radius: 2px;
                 margin: 10px 0;
@@ -248,16 +248,15 @@ class ProgressiveVirtualHTMLGenerator:
             .segment {
                 height: 100%;
                 transition: background-color 0.3s ease;
-                border-right: 1px solid #fff;
                 box-sizing: border-box;
             }
 
             .segment.loaded {
-                background: #4caf50;
+                background: #81c784;
             }
 
             .segment.unloaded {
-                background: #f44336;
+                background: #e57373;
             }
 
             .attachment-placeholder {
@@ -962,8 +961,8 @@ class ProgressiveVirtualHTMLGenerator:
                     return;
                 }}
 
-                // Calculate number of segments to display (e.g., 100 segments for the whole chat)
-                const numSegments = 100;
+                // Calculate number of segments to display (e.g., 200 segments for the whole chat)
+                const numSegments = 200;
                 const messagesPerSegment = Math.ceil(this.serverTotalMessages / numSegments);
 
                 this.segmentIndicator.innerHTML = '';
