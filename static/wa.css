@@ -1,3 +1,126 @@
+/* WhatsApp Chat Reader - core styles for bubbles and media */
+
+/* Container background similar to WhatsApp */
+.messages-container {
+    background-color: #ece5dd;
+}
+
+/* Generic message block */
+.message {
+    display: flex;
+    flex-direction: column;
+    margin: 10px 0;
+}
+
+/* Bubble wrapper */
+.message .message-wrapper {
+    position: relative;
+    max-width: 80%; /* Match WhatsApp bubble max width */
+    border-radius: 8px;
+    padding: 8px 52px 8px 12px; /* space for timestamp on the right */
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    box-shadow: 0 1px 0 rgba(0,0,0,.06);
+}
+
+/* Incoming vs outgoing alignment and colors */
+.message.incoming .message-wrapper {
+    align-self: flex-start;
+    background: #ffffff;
+    color: #111b21;
+    border-top-left-radius: 4px;
+}
+
+.message.outgoing .message-wrapper {
+    align-self: flex-end;
+    background: #d9fdd3; /* WhatsApp green-ish outgoing */
+    color: #111b21;
+    border-top-right-radius: 4px;
+}
+
+/* System messages centered and subtle */
+.message.system .message-wrapper {
+    align-self: center;
+    background: rgba(0,0,0,0.06);
+    color: #54656f;
+    max-width: 60%;
+    padding: 6px 10px;
+}
+
+/* Timestamp inside bubble at bottom-right */
+.message .timestamp {
+    position: absolute;
+    right: 10px;
+    bottom: 6px;
+    font-size: 11px;
+    line-height: 1;
+    color: #667781;
+    white-space: nowrap;
+}
+
+/* Text content without extra inner backgrounds */
+.message .message-content {
+    margin: 2px 0;
+    background: transparent;
+    padding: 0;
+}
+
+/* Attachments container inside bubble */
+.message .attachments {
+    margin-top: 8px;
+}
+
+/* Media constraints – prevent oversized media while preserving aspect ratio */
+.attachment img,
+.attachment video {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+/* Explicit max-height similar to WhatsApp viewer constraints */
+.attachment img {
+    max-height: 60vh; /* prevents huge images from overflowing viewport */
+    object-fit: contain;
+}
+
+.attachment video {
+    max-height: 60vh;
+}
+
+/* Audio and generic file blocks */
+.attachment audio {
+    width: 100%;
+}
+
+.attachment {
+    border: 1px solid #e6e6e6;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fafafa;
+}
+
+.attachment-file {
+    background: #f5f6f6;
+}
+
+/* Sender header styling for incoming messages */
+.message.incoming .message-header .sender {
+    color: #1f7aec;
+}
+
+/* Links inside bubbles */
+.url-link {
+    color: #1f7aec;
+    text-decoration: none;
+    word-break: break-word;
+}
+
+.url-link:hover {
+    text-decoration: underline;
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     margin: 0;
