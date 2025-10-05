@@ -111,6 +111,7 @@ class ProgressiveVirtualHTMLGenerator:
                 border-radius: 10px;
                 border-top-left-radius: 0;
                 word-wrap: break-word;
+                font-size: 14px;
             }
 
             .message.system .message-content {
