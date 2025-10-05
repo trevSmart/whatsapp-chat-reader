@@ -367,6 +367,39 @@ class ProgressiveVirtualHTMLGenerator:
                 font-size: 10px;
                 color: #666;
             }
+
+            .time-mark {
+                position: absolute;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: #999;
+                pointer-events: none;
+                display: flex;
+                align-items: center;
+            }
+
+            .time-mark::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: #999;
+            }
+
+            .time-mark-label {
+                position: absolute;
+                left: 100%;
+                margin-left: 5px;
+                font-size: 9px;
+                color: #666;
+                white-space: nowrap;
+                background: rgba(255, 255, 255, 0.9);
+                padding: 2px 4px;
+                border-radius: 3px;
+                pointer-events: auto;
+            }
         </style>
         """
 
@@ -581,9 +614,100 @@ class ProgressiveVirtualHTMLGenerator:
                     console.log(`Total time span: ${{this.totalTimeSpan / (1000 * 60 * 60 * 24)}} days`);
                     
                     this.updateTimeScrollbar(0, this.firstTimestamp);
+                    this.renderTimeMarks();
                 }} catch (error) {{
                     console.error('Error loading time range:', error);
                 }}
+            }}
+
+            renderTimeMarks() {{
+                if (!this.firstTimestamp || !this.lastTimestamp) {{
+                    return;
+                }}
+
+                const totalDays = this.totalTimeSpan / (1000 * 60 * 60 * 24);
+                const marks = [];
+                
+                // Calculate appropriate interval based on time span
+                let intervalDays;
+                let intervalMonths = 0;
+                
+                if (totalDays <= 7) {{
+                    // Daily marks for short time spans (1 week or less)
+                    intervalDays = 1;
+                }} else if (totalDays <= 60) {{
+                    // Weekly marks for medium time spans (up to 2 months)
+                    intervalDays = 7;
+                }} else if (totalDays <= 365) {{
+                    // Monthly marks for longer time spans (up to 1 year)
+                    intervalMonths = 1;
+                }} else {{
+                    // Quarterly marks for very long time spans
+                    intervalMonths = 3;
+                }}
+                
+                // Generate marks
+                const currentMark = new Date(this.firstTimestamp);
+                
+                if (intervalMonths > 0) {{
+                    // Add marks at month intervals
+                    currentMark.setDate(1);
+                    currentMark.setHours(0, 0, 0, 0);
+                    
+                    while (currentMark <= this.lastTimestamp) {{
+                        if (currentMark >= this.firstTimestamp) {{
+                            marks.push(new Date(currentMark));
+                        }}
+                        currentMark.setMonth(currentMark.getMonth() + intervalMonths);
+                    }}
+                }} else {{
+                    // Add marks at day intervals
+                    currentMark.setHours(0, 0, 0, 0);
+                    
+                    while (currentMark <= this.lastTimestamp) {{
+                        if (currentMark >= this.firstTimestamp) {{
+                            marks.push(new Date(currentMark));
+                        }}
+                        currentMark.setDate(currentMark.getDate() + intervalDays);
+                    }}
+                }}
+
+                // Remove existing marks
+                const existingMarks = this.timeScrollbar.querySelectorAll('.time-mark');
+                existingMarks.forEach(mark => mark.remove());
+
+                // Add new marks
+                marks.forEach(markTime => {{
+                    const percentage = (markTime - this.firstTimestamp) / this.totalTimeSpan;
+                    const markElement = document.createElement('div');
+                    markElement.className = 'time-mark';
+                    markElement.style.top = `${{percentage * 100}}%`;
+                    
+                    // Format label based on interval
+                    let label;
+                    if (intervalMonths > 0) {{
+                        // Show month and year for monthly marks
+                        label = markTime.toLocaleDateString('ca-ES', {{
+                            month: 'short',
+                            year: '2-digit'
+                        }});
+                    }} else {{
+                        // Show day and month for weekly marks
+                        label = markTime.toLocaleDateString('ca-ES', {{
+                            day: 'numeric',
+                            month: 'short'
+                        }});
+                    }}
+                    
+                    const labelElement = document.createElement('span');
+                    labelElement.className = 'time-mark-label';
+                    labelElement.textContent = label;
+                    markElement.appendChild(labelElement);
+                    
+                    this.timeScrollbar.appendChild(markElement);
+                }});
+
+                console.log(`Rendered ${{marks.length}} time marks`);
             }}
 
             handleTimeScrollbarClick(e) {{
