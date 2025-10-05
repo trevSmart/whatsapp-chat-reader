@@ -38,9 +38,7 @@ if [ -d "$VENV_PATH" ]; then
         echo -e "${BLUE}📦 Instal·lant dependències a l'entorn virtual...${NC}"
         
         # Install dependencies in virtual environment
-        "$VENV_PATH/bin/pip" install flask flask-cors
-        
-        if [ $? -eq 0 ]; then
+        if "$VENV_PATH/bin/pip" install flask flask-cors; then
             echo -e "${GREEN}✅ Dependències instal·lades correctament${NC}"
             echo
             echo -e "${BLUE}🎯 Executant servidor amb entorn virtual...${NC}"
@@ -72,9 +70,7 @@ if ! python3 -c "import flask" 2>/dev/null; then
     echo -e "${BLUE}📦 Instal·lant dependències amb --user...${NC}"
     
     # Install dependencies with --user flag
-    pip3 install --user flask flask-cors
-    
-    if [ $? -eq 0 ]; then
+    if pip3 install --user flask flask-cors; then
         echo -e "${GREEN}✅ Dependències instal·lades correctament${NC}"
     else
         echo -e "${RED}❌ Error instal·lant dependències${NC}"
