@@ -14,11 +14,19 @@ Aquesta aplicació processa els fitxers de text exportats de WhatsApp i genera u
 
 ## Instal·lació
 
-No cal instal·lar dependències externes. L'aplicació utilitza només mòduls de la biblioteca estàndard de Python.
+No cal instal·lar dependències externes per l'aplicació bàsica. L'aplicació utilitza només mòduls de la biblioteca estàndard de Python.
 
 ```bash
 git clone <repository-url>
 cd whatsapp-chat-reader
+```
+
+### Servidor Progressiu (Opcional)
+
+Per utilitzar el servidor progressiu amb xats molt grans, cal instal·lar Flask:
+
+```bash
+pip install flask flask-cors
 ```
 
 ## Ús
@@ -104,6 +112,45 @@ whatsapp-chat-reader/
 └── README.md                 # Aquesta documentació
 ```
 
+## Servidor Progressiu per Xats Grans
+
+Per xats amb desenes de milers de missatges, utilitza el servidor progressiu:
+
+```bash
+# Instal·lar dependències
+pip install flask flask-cors
+
+# Executar servidor
+python3 progressive_server.py "chat.txt" --attachments "./adjunts" --chat-name "El meu xat" --port 8080
+```
+
+El servidor progressiu ofereix:
+- **Lectura progressiva**: Només carrega els missatges necessaris
+- **Virtual scrolling**: Rendiment òptim amb milers de missatges
+- **Càrrega sota demanda**: Adjunts carregats quan es necessiten
+- **API REST**: Endpoints per accedir a missatges i adjunts
+- **Cerca en temps real**: Filtratge instantani de missatges
+
+Obre el navegador a `http://localhost:8080` per veure el xat.
+
+## Proves amb Exemple Real
+
+El projecte inclou un exemple real de test amb més de 25.000 missatges i 3.400 adjunts:
+
+```bash
+# Executar tests automàtics
+./test_real_example.sh
+
+# O manualment amb pytest
+python3 -m pytest tests/test_real_example.py -v
+
+# O executar el servidor amb l'exemple
+python3 progressive_server.py "tests/real-example-test/_chat.txt" \
+    --attachments "tests/real-example-test" \
+    --chat-name "Test Chat" \
+    --port 8080
+```
+
 ## Característiques
 
 - **Integració completa**: Tots els adjunts es mostren directament al document
@@ -112,7 +159,7 @@ whatsapp-chat-reader/
 - **Enllaços clicables**: URLs automàticament convertides a enllaços
 - **Estadístiques**: Informació sobre missatges, adjunts i participants
 - **Codificació robusta**: Suport per diferents codificacions de text
-- **Sense dependències**: Utilitza només la biblioteca estàndard de Python
+- **Servidor progressiu**: Per xats molt grans amb virtual scrolling
 
 ## Limitacions
 
