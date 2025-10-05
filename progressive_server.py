@@ -12,6 +12,7 @@ import mimetypes
 from pathlib import Path
 from flask import Flask, jsonify, request, send_file, send_from_directory
 from flask_cors import CORS
+from werkzeug.utils import secure_filename
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent / "src"))
@@ -165,12 +166,15 @@ def get_attachment(filename):
     if not server or not server.attachment_dir:
         return jsonify({'error': 'Attachment directory not configured'}), 404
 
-    attachment_path = os.path.join(server.attachment_dir, filename)
-
-    if not os.path.exists(attachment_path):
+    # Secure the filename and validate the final path is within attachment_dir
+    safe_filename = secure_filename(filename)
+    base_dir = os.path.abspath(server.attachment_dir)
+    requested_path = os.path.abspath(os.path.normpath(os.path.join(base_dir, safe_filename)))
+    if not requested_path.startswith(base_dir):
+        return jsonify({'error': 'Invalid file path'}), 400
+    if not os.path.exists(requested_path):
         return jsonify({'error': 'File not found'}), 404
-
-    return send_file(attachment_path)
+    return send_file(requested_path)
 
 @app.route('/api/stats')
 def get_stats():
