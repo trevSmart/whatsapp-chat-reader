@@ -1,34 +1,32 @@
-# Copilot Environment Setup Instructions for WhatsApp Chat Reader
+# Copilot setup — WhatsApp Chat Reader
 
-This file contains the necessary instructions to set up the Copilot environment for the WhatsApp Chat Reader project.
+Instruccions mínimes per preparar l'entorn amb GitHub Copilot.
 
-## Prerequisites
-- Ensure you have GitHub Copilot enabled in your GitHub account.
-- Install the necessary dependencies for the project.
+## Prerequisits
+- Tenir GitHub Copilot activat al teu compte GitHub.
+- Disposar de Python 3.8+ instal·lat.
 
-## Setup Steps
-1. **Clone the repository**:
+## Passos ràpids
+1. Clonar el repositori
    ```bash
    git clone https://github.com/trevSmart/whatsapp-chat-reader.git
    cd whatsapp-chat-reader
    ```
 
-2. **Install Dependencies**:
-   Ensure you have Node.js installed, then run:
+2. Crear i activar entorn virtual
    ```bash
-   npm install
+   python3 -m venv venv_new
+   source venv_new/bin/activate
    ```
 
-3. **Configure Copilot**:
-   - Open your IDE with GitHub Copilot support.
-   - Sign in with your GitHub account.
-   - Enable GitHub Copilot in your IDE settings.
+3. Instal·lar Flask
+   ```bash
+   pip install flask
+   ```
 
-4. **Start Coding**:
-   Begin using GitHub Copilot to assist you in the development of the WhatsApp Chat Reader project.
+4. Activar Copilot a l'IDE
+- Inicia sessió amb GitHub i habilita Copilot a la configuració de l'IDE.
 
-## Additional Resources
-- [GitHub Copilot Documentation](https://docs.github.com/en/copilot)
-- [WhatsApp Chat Reader Documentation](https://github.com/trevSmart/whatsapp-chat-reader/blob/main/README.md)
-
-Happy Coding!
+## Recursos
+- Documentació de Copilot: https://docs.github.com/en/copilot
+- README del projecte: https://github.com/trevSmart/whatsapp-chat-reader/blob/main/README.md
