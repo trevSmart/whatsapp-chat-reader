@@ -305,7 +305,7 @@ class ProgressiveVirtualHTMLGenerator:
                 right: 0;
                 top: 0;
                 bottom: 0;
-                width: 60px;
+                width: 120px;
                 background: rgba(0, 0, 0, 0.1);
                 z-index: 1000;
                 display: flex;
@@ -366,6 +366,42 @@ class ProgressiveVirtualHTMLGenerator:
             .time-label {
                 font-size: 10px;
                 color: #666;
+            }
+
+            .time-mark {
+                position: absolute;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: #999;
+                pointer-events: none;
+                display: flex;
+                align-items: center;
+            }
+
+            .time-mark::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: #999;
+            }
+
+            .time-mark-label {
+                position: absolute;
+                left: 100%;
+                margin-left: 5px;
+                font-size: 9px;
+                color: #666;
+                white-space: nowrap;
+                background: rgba(255, 255, 255, 0.9);
+                padding: 2px 4px;
+                border-radius: 3px;
+                transform: translateY(-50%);
+                font-weight: normal;
+                pointer-events: none;
+                z-index: 1;
             }
         </style>
         """
@@ -581,9 +617,108 @@ class ProgressiveVirtualHTMLGenerator:
                     console.log(`Total time span: ${{this.totalTimeSpan / (1000 * 60 * 60 * 24)}} days`);
                     
                     this.updateTimeScrollbar(0, this.firstTimestamp);
+                    this.renderTimeMarks();
                 }} catch (error) {{
                     console.error('Error loading time range:', error);
                 }}
+            }}
+
+            renderTimeMarks() {{
+                if (!this.firstTimestamp || !this.lastTimestamp) {{
+                    return;
+                }}
+
+                // Calculate time span in days
+                const totalDays = this.totalTimeSpan / (1000 * 60 * 60 * 24);
+                
+                // Determine interval based on total time span
+                let intervalMonths = 1;
+                let intervalDays = 0;
+                
+                if (totalDays < 30) {{
+                    // Less than 1 month: mark every week
+                    intervalDays = 7;
+                    intervalMonths = 0;
+                }} else if (totalDays < 180) {{
+                    // 1-6 months: mark every month
+                    intervalMonths = 1;
+                }} else if (totalDays < 365) {{
+                    // 6-12 months: mark every 2 months
+                    intervalMonths = 2;
+                }} else if (totalDays < 730) {{
+                    // 1-2 years: mark every 3 months
+                    intervalMonths = 3;
+                }} else {{
+                    // More than 2 years: mark every 6 months
+                    intervalMonths = 6;
+                }}
+
+                console.log(`Rendering time marks with interval: ${{intervalMonths > 0 ? intervalMonths + ' months' : intervalDays + ' days'}}`);
+
+                // Generate marks
+                const marks = [];
+                let currentMark = new Date(this.firstTimestamp);
+                
+                if (intervalMonths > 0) {{
+                    // Round to start of month
+                    currentMark.setDate(1);
+                    currentMark.setHours(0, 0, 0, 0);
+                    
+                    // Add marks at month intervals
+                    while (currentMark <= this.lastTimestamp) {{
+                        if (currentMark >= this.firstTimestamp) {{
+                            marks.push(new Date(currentMark));
+                        }}
+                        currentMark.setMonth(currentMark.getMonth() + intervalMonths);
+                    }}
+                }} else {{
+                    // Add marks at day intervals
+                    currentMark.setHours(0, 0, 0, 0);
+                    
+                    while (currentMark <= this.lastTimestamp) {{
+                        if (currentMark >= this.firstTimestamp) {{
+                            marks.push(new Date(currentMark));
+                        }}
+                        currentMark.setDate(currentMark.getDate() + intervalDays);
+                    }}
+                }}
+
+                // Remove existing marks
+                const existingMarks = this.timeScrollbar.querySelectorAll('.time-mark');
+                existingMarks.forEach(mark => mark.remove());
+
+                // Add new marks
+                marks.forEach(markTime => {{
+                    const percentage = (markTime - this.firstTimestamp) / this.totalTimeSpan;
+                    const markElement = document.createElement('div');
+                    markElement.className = 'time-mark';
+                    markElement.style.top = `${{percentage * 100}}%`;
+                    
+                    // Format label based on interval
+                    let label;
+                    if (intervalMonths > 0) {{
+                        // Show month and year for monthly marks
+                        label = markTime.toLocaleDateString('ca-ES', {{
+                            month: 'short',
+                            year: '2-digit'
+                        }});
+                    }} else {{
+                        // Show day and month for weekly marks
+                        label = markTime.toLocaleDateString('ca-ES', {{
+                            day: 'numeric',
+                            month: 'short'
+                        }});
+                    }}
+                    
+                    const labelElement = document.createElement('span');
+                    labelElement.className = 'time-mark-label';
+                    labelElement.textContent = label;
+                    markElement.appendChild(labelElement);
+                    
+                    this.timeScrollbar.appendChild(markElement);
+                }});
+
+                console.log(`Rendered ${{marks.length}} time marks`);
             }}
 
             handleTimeScrollbarClick(e) {{
