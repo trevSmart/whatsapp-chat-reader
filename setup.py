@@ -8,6 +8,9 @@ from setuptools import setup, find_packages
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
+with open("requirements.txt", "r", encoding="utf-8") as fh:
+    requirements = [line.strip() for line in fh if line.strip() and not line.startswith("#")]
+
 setup(
     name="whatsapp-chat-reader",
     version="1.0.0",
@@ -19,6 +22,7 @@ setup(
     url="https://github.com/marcpla/whatsapp-chat-reader",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
+    install_requires=requirements,
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: End Users/Desktop",
@@ -37,6 +41,7 @@ setup(
     entry_points={
         "console_scripts": [
             "whatsapp-chat-reader=whatsapp_chat_reader.main:main",
+            "whatsapp-progressive-server=progressive_server:main",
         ],
     },
     include_package_data=True,

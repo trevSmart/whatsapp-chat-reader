@@ -38,11 +38,18 @@ cd whatsapp-chat-reader
 PYTHONPATH=src python3 -m whatsapp_chat_reader.main chat.txt
 ```
 
-O usar el servidor progressiu:
+O usar el servidor progressiu amb el script fàcil:
 
 ```bash
-python3 progressive_server.py chat.txt
+./easy_server.sh chat.txt --chat-name "El meu xat" --port 8080
 ```
+
+### Scripts d'execució fàcil
+
+Hem creat scripts que gestionen automàticament les dependències:
+
+- **`./easy_server.sh`**: Utilitza automàticament l'entorn virtual existent
+- **`./run_server.sh`**: Intenta instal·lar dependències globalment (pot fallar en macOS)
 
 ### Servidor Progressiu (Opcional)
 
@@ -52,15 +59,29 @@ Per utilitzar el servidor progressiu amb xats molt grans, cal instal·lar Flask:
 pip install flask flask-cors
 ```
 
+O simplement usa el script fàcil que ho gestiona automàticament.
+
 ## Ús
 
 ### Ús amb servidor progressiu (recomanat per xats grans)
 
+**Opció 1: Script fàcil (recomanat)**
+```bash
+./easy_server.sh chat.txt --chat-name "El meu xat" --port 8080
+```
+
+**Opció 2: Manual amb entorn virtual**
+```bash
+source venv_new/bin/activate
+python progressive_server.py chat.txt --chat-name "El meu xat" --port 8080
+```
+
+**Opció 3: Manual amb detecció automàtica d'adjunts**
 ```bash
 python progressive_server.py chat.txt --attachments ./adjunts --chat-name "El meu xat" --port 8080
 ```
 
-Això iniciarà un servidor Flask que carrega els missatges progressivament, ideal per xats amb desenes de milers de missatges.
+El servidor detecta automàticament el directori d'adjunts al mateix nivell que el fitxer TXT, així que normalment no cal especificar `--attachments`.
 
 ### Ús bàsic (generador HTML estàtic)
 

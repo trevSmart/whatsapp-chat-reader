@@ -213,7 +213,7 @@ Exemples d'ús:
 
     parser.add_argument(
         "--attachments",
-        help="Directori on es troben els adjunts (opcional)"
+        help="Directori on es troben els adjunts (opcional). Si no s'especifica, es busca al mateix directori que el fitxer TXT"
     )
 
     parser.add_argument(
@@ -245,9 +245,17 @@ Exemples d'ús:
     if not args.chat_name:
         args.chat_name = "WhatsApp Chat"
 
+    # Auto-detect attachment directory if not specified
+    if not args.attachments:
+        chat_file_dir = os.path.dirname(os.path.abspath(args.chat_file))
+        args.attachments = chat_file_dir
+        print(f"🔍 Directori d'adjunts detectat automàticament: {args.attachments}")
+    else:
+        print(f"📎 Directori d'adjunts especificat: {args.attachments}")
+
     print("🚀 Iniciant WhatsApp Chat Reader - Servidor Progressiu")
     print(f"📁 Fitxer de xat: {args.chat_file}")
-    print(f"📎 Adjunts: {args.attachments if args.attachments else 'No especificat'}")
+    print(f"📎 Adjunts: {args.attachments}")
     print(f"🌐 Host: {args.host}")
     print(f"🔌 Port: {args.port}")
     print(f"💬 Nom del xat: {args.chat_name}")
