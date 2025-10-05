@@ -14,7 +14,7 @@ class ProgressiveVirtualHTMLGenerator:
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
                 margin: 0;
                 padding: 0;
-                background-color: #f0f0f0;
+                background-color: #ece5dd;
                 line-height: 1.6;
             }
 
@@ -1143,9 +1143,22 @@ class ProgressiveVirtualHTMLGenerator:
 
             createMessageElement(message, messageIndex) {{
                 const messageDiv = document.createElement('div');
-                messageDiv.className = `message${{message.is_system_message ? ' system' : ''}}`;
+                
+                // Add appropriate classes based on message type
+                let messageClasses = 'message';
+                if (message.is_system_message) {{
+                    messageClasses += ' system';
+                }} else if (message.is_outgoing) {{
+                    messageClasses += ' outgoing';
+                }} else {{
+                    messageClasses += ' incoming';
+                }}
+                messageDiv.className = messageClasses;
 
-                const timestamp = new Date(message.timestamp).toLocaleString('ca-ES');
+                const timestamp = new Date(message.timestamp).toLocaleString('ca-ES', {{
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }});
 
                 let attachmentsHtml = '';
                 if (message.attachments && message.attachments.length > 0) {{
@@ -1158,14 +1171,30 @@ class ProgressiveVirtualHTMLGenerator:
 
                 const contentWithUrls = this.extractUrls(message.content);
 
-                messageDiv.innerHTML = `
-                    <div class="message-header">
-                        <span class="sender">${{message.sender}}</span>
-                        <span class="timestamp">${{timestamp}}</span>
-                    </div>
-                    ${{message.content ? `<div class="message-content">${{contentWithUrls}}</div>` : ''}}
-                    ${{attachmentsHtml}}
-                `;
+                // Build the message wrapper with content and timestamp inside
+                let wrapperContent = '';
+                
+                // Add sender name only for incoming messages
+                if (!message.is_system_message && !message.is_outgoing) {{
+                    wrapperContent += `<div class="message-header"><span class="sender">${{message.sender}}</span></div>`;
+                }}
+                
+                // Add text content if present
+                if (message.content && message.content.trim()) {{
+                    wrapperContent += `<div class="message-content">${{contentWithUrls}}</div>`;
+                }}
+                
+                // Add attachments
+                wrapperContent += attachmentsHtml;
+                
+                // Add timestamp at the end (will float right inside bubble)
+                if (!message.is_system_message) {{
+                    wrapperContent += `<div style="clear: both;"></div><span class="timestamp">${{timestamp}}</span>`;
+                }} else {{
+                    wrapperContent += `<span class="timestamp" style="display:block; text-align:center; margin-top:4px;">${{timestamp}}</span>`;
+                }}
+
+                messageDiv.innerHTML = `<div class="message-wrapper">${{wrapperContent}}</div>`;
 
                 return messageDiv;
             }}

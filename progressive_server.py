@@ -27,9 +27,10 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class ProgressiveChatServer:
-    def __init__(self, chat_file_path: str, attachment_dir: str = None):
+    def __init__(self, chat_file_path: str, attachment_dir: str = None, user_name: str = None):
         self.chat_file_path = chat_file_path
         self.attachment_dir = attachment_dir
+        self.user_name = user_name
         self.parser = WhatsAppParser()
 
         # Cache for parsed messages
@@ -39,6 +40,7 @@ class ProgressiveChatServer:
 
         print(f"📁 Fitxer de xat: {chat_file_path}")
         print(f"📎 Directori adjunts: {attachment_dir}")
+        print(f"👤 Usuari: {user_name if user_name else '(no especificat)'}")
         print(f"📊 Mida del fitxer: {self.file_size / (1024*1024):.1f} MB")
 
     def parse_messages_chunk(self, offset: int, limit: int):
@@ -76,11 +78,17 @@ class ProgressiveChatServer:
 
     def message_to_dict(self, message):
         """Convert WhatsAppMessage to dictionary."""
+        # Determine if this is an outgoing message (from the user)
+        is_outgoing = False
+        if self.user_name and message.sender == self.user_name:
+            is_outgoing = True
+        
         message_dict = {
             'timestamp': message.timestamp.isoformat(),
             'sender': message.sender,
             'content': message.content,
             'is_system_message': message.is_system_message,
+            'is_outgoing': is_outgoing,
             'attachments': []
         }
 
@@ -363,6 +371,11 @@ Exemples d'ús:
         help="Nom del xat per mostrar al capçalera (per defecte: 'WhatsApp Chat')"
     )
 
+    parser.add_argument(
+        "--user",
+        help="Nom de l'usuari (les seves missatges es mostraran a la dreta)"
+    )
+
     args = parser.parse_args()
 
     # Validate chat file
@@ -393,7 +406,7 @@ Exemples d'ús:
     try:
         # Initialize server
         global server
-        server = ProgressiveChatServer(args.chat_file, args.attachments)
+        server = ProgressiveChatServer(args.chat_file, args.attachments, args.user)
 
         # Generate HTML file
         print("🎨 Generant fitxer HTML...")
