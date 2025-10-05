@@ -70,6 +70,9 @@ class HTMLGenerator:
             .message-content {
                 word-wrap: break-word;
                 font-size: 14px;
+                background: transparent; /* ensure no inner bubble */
+                padding: 0;
+                border-radius: 0;
             }
 
             .message.system .message-content {
