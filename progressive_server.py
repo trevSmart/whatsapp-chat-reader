@@ -228,7 +228,11 @@ def get_messages_by_time():
 
     try:
         from datetime import datetime
-        target_dt = datetime.fromisoformat(target_timestamp)
+        target_dt = datetime.fromisoformat(target_timestamp.replace('Z', '+00:00'))
+        
+        # Make timezone-naive for comparison (remove timezone info)
+        if target_dt.tzinfo is not None:
+            target_dt = target_dt.replace(tzinfo=None)
         
         all_messages = server.parser.parse_chat_file(server.chat_file_path)
         
@@ -242,6 +246,10 @@ def get_messages_by_time():
         while left <= right:
             mid = (left + right) // 2
             msg_time = all_messages[mid].timestamp
+            
+            # Make sure msg_time is also timezone-naive
+            if msg_time.tzinfo is not None:
+                msg_time = msg_time.replace(tzinfo=None)
             
             if msg_time < target_dt:
                 left = mid + 1

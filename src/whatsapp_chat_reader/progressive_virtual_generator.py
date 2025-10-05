@@ -914,6 +914,11 @@ class ProgressiveVirtualHTMLGenerator:
                 // Update last scroll height to prevent infinite loops
                 this.lastScrollHeight = this.messagesContainer.scrollHeight;
                 
+                // Update time scrollbar after rendering
+                if (this.firstTimestamp && this.lastTimestamp && !this.isScrollingFromTimeScrollbar) {{
+                    this.updateTimeScrollbarFromMessages();
+                }}
+                
                 // Clear flag - we're done rendering
                 this.isRendering = false;
             }}
