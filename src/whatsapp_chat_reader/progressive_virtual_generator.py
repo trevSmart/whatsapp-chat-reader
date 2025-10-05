@@ -543,6 +543,7 @@ class ProgressiveVirtualHTMLGenerator:
 
                 if (this.filteredMessages.length === 0) {{
                     this.messagesContainer.innerHTML = '<div class="loading">No s\\'han trobat missatges.</div>';
+                    this.isRendering = false; // Reset flag before early return
                     return;
                 }}
 
