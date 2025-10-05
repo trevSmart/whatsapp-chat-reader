@@ -468,8 +468,9 @@ class ProgressiveVirtualHTMLGenerator:
 
                     if (data.messages && data.messages.length > 0) {{
                         // Record the segment that was loaded
-                        const segmentStart = this.currentOffset;
-                        const segmentEnd = this.currentOffset + data.messages.length;
+                        // Use data.offset from server response to ensure accuracy
+                        const segmentStart = data.offset;
+                        const segmentEnd = data.offset + data.messages.length;
                         
                         // Add to loaded segments (merge if overlapping with existing segments)
                         this.addLoadedSegment(segmentStart, segmentEnd);
