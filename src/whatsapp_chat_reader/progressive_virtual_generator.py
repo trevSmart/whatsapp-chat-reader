@@ -8,7 +8,6 @@ from .parser import WhatsAppMessage
 class ProgressiveVirtualHTMLGenerator:
     def __init__(self):
         self.css_styles = """
-        <link rel=\"stylesheet\" href=\"/static/wa.css\">
         <style>
             body {
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;

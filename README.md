@@ -41,15 +41,14 @@ PYTHONPATH=src python3 -m whatsapp_chat_reader.main chat.txt
 O usar el servidor progressiu amb el script fàcil:
 
 ```bash
-./easy_server.sh chat.txt --chat-name "El meu xat" --port 8080
+./server.sh chat.txt --chat-name "El meu xat" --port 8080
 ```
 
-### Scripts d'execució fàcil
+### Script d'execució fàcil
 
-Hem creat scripts que gestionen automàticament les dependències:
+Hem creat un script intel·ligent que gestiona automàticament les dependències:
 
-- **`./easy_server.sh`**: Utilitza automàticament l'entorn virtual existent
-- **`./run_server.sh`**: Intenta instal·lar dependències globalment (pot fallar en macOS)
+- **`./server.sh`**: Prova primer amb entorn virtual, després amb instal·lació global
 
 ### Servidor Progressiu (Opcional)
 
@@ -67,7 +66,7 @@ O simplement usa el script fàcil que ho gestiona automàticament.
 
 **Opció 1: Script fàcil (recomanat)**
 ```bash
-./easy_server.sh chat.txt --chat-name "El meu xat" --port 8080
+./server.sh chat.txt --chat-name "El meu xat" --port 8080
 ```
 
 **Opció 2: Manual amb entorn virtual**
@@ -83,7 +82,7 @@ python progressive_server.py chat.txt --attachments ./adjunts --chat-name "El me
 
 **Opció 4: Ús mínim (port per defecte 5000)**
 ```bash
-./easy_server.sh chat.txt
+./server.sh chat.txt
 ```
 
 > **Nota**: En macOS, el port 5000 pot estar ocupat per AirPlay. Si tens problemes, usa un port diferent com `--port 8080`.
