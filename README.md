@@ -81,6 +81,13 @@ python progressive_server.py chat.txt --chat-name "El meu xat" --port 8080
 python progressive_server.py chat.txt --attachments ./adjunts --chat-name "El meu xat" --port 8080
 ```
 
+**Opció 4: Ús mínim (port per defecte 5000)**
+```bash
+./easy_server.sh chat.txt
+```
+
+> **Nota**: En macOS, el port 5000 pot estar ocupat per AirPlay. Si tens problemes, usa un port diferent com `--port 8080`.
+
 El servidor detecta automàticament el directori d'adjunts al mateix nivell que el fitxer TXT, així que normalment no cal especificar `--attachments`.
 
 ### Ús bàsic (generador HTML estàtic)
