@@ -90,6 +90,7 @@ body {
 
 .message-wrapper {
     max-width: 65%;
+    width: fit-content;
     position: relative;
 }
 
