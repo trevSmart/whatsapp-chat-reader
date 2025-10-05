@@ -403,6 +403,7 @@ class ProgressiveVirtualHTMLGenerator:
                 this.scrollTimeout = null;
                 this.lastScrollHeight = 0; // Track scroll height to prevent infinite loops
                 this.loadedSegments = []; // Track loaded message ranges
+                this.isRendering = false; // Track when we're inside renderMessages() to ignore scroll events
 
                 // Configuration
                 this.chatFileUrl = '{chat_file_path}';
@@ -615,6 +616,9 @@ class ProgressiveVirtualHTMLGenerator:
             }}
 
             renderMessages() {{
+                // Set flag to ignore scroll events triggered by this method
+                this.isRendering = true;
+                
                 // Save current scroll position
                 const currentScrollTop = this.messagesContainer.scrollTop;
                 const currentScrollHeight = this.messagesContainer.scrollHeight;
@@ -623,6 +627,7 @@ class ProgressiveVirtualHTMLGenerator:
 
                 if (this.filteredMessages.length === 0) {{
                     this.messagesContainer.innerHTML = '<div class="loading">No s\\'han trobat missatges.</div>';
+                    this.isRendering = false; // Reset flag before early return
                     return;
                 }}
 
@@ -659,6 +664,9 @@ class ProgressiveVirtualHTMLGenerator:
 
                 // Update last scroll height to prevent infinite loops
                 this.lastScrollHeight = this.messagesContainer.scrollHeight;
+                
+                // Clear flag - we're done rendering
+                this.isRendering = false;
             }}
 
             createMessageElement(message, messageIndex) {{
@@ -831,6 +839,11 @@ class ProgressiveVirtualHTMLGenerator:
             }}
 
             handleScroll() {{
+                // Ignore scroll events triggered by renderMessages()
+                if (this.isRendering) {{
+                    return;
+                }}
+                
                 this.showScrollIndicator();
                 this.updateScrollInfo();
 
