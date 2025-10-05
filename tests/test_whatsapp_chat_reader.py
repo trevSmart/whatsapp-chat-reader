@@ -74,6 +74,25 @@ class TestWhatsAppParser(unittest.TestCase):
         finally:
             os.unlink(temp_file)
 
+    def test_parse_message_with_zero_width_character(self):
+        """Test parsing messages that start with zero-width characters like \u200e"""
+        chat_content = """[12/5/21 16:10:58] Marc: joer que rapid
+‎[13/5/21 9:01:30] Marc: ‎vídeo omès"""
+
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt', encoding='utf-8') as f:
+            f.write(chat_content)
+            temp_file = f.name
+
+        try:
+            messages = self.parser.parse_chat_file(temp_file)
+            self.assertEqual(len(messages), 2)
+            self.assertEqual(messages[0].sender, "Marc")
+            self.assertEqual(messages[0].content, "joer que rapid")
+            self.assertEqual(messages[1].sender, "Marc")
+            self.assertEqual(messages[1].content, "vídeo omès")
+        finally:
+            os.unlink(temp_file)
+
 class TestHTMLGenerator(unittest.TestCase):
 
     def setUp(self):

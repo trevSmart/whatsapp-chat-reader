@@ -16,8 +16,9 @@ class WhatsAppParser:
     def __init__(self):
         # Regex pattern to match WhatsApp message format
         # [date time] sender: message content
+        # Note: Lines may start with zero-width characters like \u200e (LEFT-TO-RIGHT MARK)
         self.message_pattern = re.compile(
-            r'^\[(\d{1,2}/\d{1,2}/\d{2,4})\s+(\d{1,2}:\d{2}:\d{2})\]\s+([^:]+):\s+(.*)$',
+            r'^\u200e?\[(\d{1,2}/\d{1,2}/\d{2,4})\s+(\d{1,2}:\d{2}:\d{2})\]\s+([^:]+):\s+(.*)$',
             re.MULTILINE
         )
 
@@ -25,7 +26,8 @@ class WhatsAppParser:
         self.attachment_pattern = re.compile(r'\u200e<adjunt:\s+([^>]+)>')
 
         # Pattern to match system messages (like encryption notice)
-        self.system_pattern = re.compile(r'^\[(\d{1,2}/\d{1,2}/\d{2,4})\s+(\d{1,2}:\d{2}:\d{2})\]\s+([^:]+):\s+‎(.*)$')
+        # Note: Lines may start with zero-width characters like \u200e (LEFT-TO-RIGHT MARK)
+        self.system_pattern = re.compile(r'^\u200e?\[(\d{1,2}/\d{1,2}/\d{2,4})\s+(\d{1,2}:\d{2}:\d{2})\]\s+([^:]+):\s+‎(.*)$')
 
     def parse_chat_file(self, file_path: str) -> List[WhatsAppMessage]:
         """Parse a WhatsApp chat export file and return list of messages."""
@@ -82,8 +84,8 @@ class WhatsAppParser:
                 # Extract attachments from content
                 attachments = self.attachment_pattern.findall(content)
 
-                # Remove attachment markers from content
-                clean_content = self.attachment_pattern.sub('', content).strip()
+                # Remove attachment markers from content and strip zero-width characters
+                clean_content = self.attachment_pattern.sub('', content).strip().strip('\u200e')
 
                 current_message = WhatsAppMessage(
                     timestamp=timestamp,
