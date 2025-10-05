@@ -1,0 +1,6 @@
+BEGIN:VCARD
+VERSION:3.0
+N:;Vodafone;;;
+FN:Vodafone
+TEL;type=CELL;type=VOICE:+3422123
+END:VCARD

@@ -1,0 +1,8 @@
+BEGIN:VCARD
+VERSION:3.0
+N:Pla;Marc;;;
+FN:Marc Pla
+TEL;type=CELL;type=VOICE;waid=34650399855:+34 650 39 98 55
+item1.ADR;type=HOME:;;Mejía Lequerica 24, 5è 3a;Barcelona;Barcelona;08028;Espanya
+item1.X-ABADR:es
+END:VCARD
