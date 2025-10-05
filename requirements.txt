@@ -1,8 +1,10 @@
 # WhatsApp Chat Reader - Dependencies
-# This project uses only Python standard library modules
-# No external dependencies required
 
-# The following modules are used from Python standard library:
+# Core dependencies for the progressive server
+Flask>=2.0.0
+Flask-CORS>=3.0.0
+
+# Python standard library modules used:
 # - re (regular expressions)
 # - os (operating system interface)
 # - datetime (date and time handling)
@@ -13,8 +15,10 @@
 # - pathlib (path handling)
 # - argparse (command line argument parsing)
 # - webbrowser (opening web pages)
+# - json (JSON handling)
+# - sys (system-specific parameters)
 
-# If you want to add additional features, you might consider:
+# Optional dependencies for enhanced features:
 # - Pillow (PIL) for advanced image processing
 # - python-dateutil for better date parsing
 # - jinja2 for more advanced HTML templating
