@@ -1217,7 +1217,7 @@ class ProgressiveVirtualHTMLGenerator:
                                 <button class="wa-play" aria-label="Play" data-state="paused">▶</button>
                                 <div class="wa-wave">
                                     <div class="wa-progress"></div>
-                                    ${{Array.from({length: 40}).map((_, i) => `<span style="height: ${{6 + (i % 8) * 2}}px"></span>`).join('')}}
+                                    ${{Array.from({{length: 40}}).map((_, i) => `<span style="height: ${{6 + (i % 8) * 2}}px"></span>`).join('')}}
                                 </div>
                                 <span class="wa-time" data-time>0:00</span>
                             </div>
