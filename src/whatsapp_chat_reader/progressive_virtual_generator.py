@@ -299,6 +299,65 @@ class ProgressiveVirtualHTMLGenerator:
                 border-left: 4px solid #2196f3;
                 font-size: 14px;
             }
+
+            .time-scrollbar-container {
+                position: fixed;
+                right: 0;
+                top: 0;
+                bottom: 0;
+                width: 60px;
+                background: rgba(0, 0, 0, 0.1);
+                z-index: 1000;
+                display: flex;
+                flex-direction: column;
+                padding: 10px 5px;
+                box-sizing: border-box;
+            }
+
+            .time-scrollbar {
+                position: relative;
+                flex: 1;
+                background: #e0e0e0;
+                border-radius: 8px;
+                cursor: pointer;
+                margin: 5px 0;
+            }
+
+            .time-scrollbar-thumb {
+                position: absolute;
+                left: 0;
+                right: 0;
+                background: #075e54;
+                border-radius: 8px;
+                min-height: 30px;
+                transition: background 0.2s;
+                cursor: grab;
+            }
+
+            .time-scrollbar-thumb:hover {
+                background: #064d44;
+            }
+
+            .time-scrollbar-thumb:active {
+                cursor: grabbing;
+                background: #053b34;
+            }
+
+            .time-indicator {
+                text-align: center;
+                font-size: 11px;
+                color: #333;
+                font-weight: bold;
+                margin: 5px 0;
+                background: rgba(255, 255, 255, 0.9);
+                padding: 5px;
+                border-radius: 5px;
+            }
+
+            .time-label {
+                font-size: 10px;
+                color: #666;
+            }
         </style>
         """
 
@@ -384,6 +443,20 @@ class ProgressiveVirtualHTMLGenerator:
         <div id="scrollInfo">Carregant...</div>
     </div>
 
+    <div class="time-scrollbar-container" id="timeScrollbarContainer">
+        <div class="time-indicator">
+            <div class="time-label">Data actual</div>
+            <div id="currentTimeLabel">--</div>
+        </div>
+        <div class="time-scrollbar" id="timeScrollbar">
+            <div class="time-scrollbar-thumb" id="timeScrollbarThumb"></div>
+        </div>
+        <div class="time-indicator">
+            <div class="time-label">Temps transcorregut</div>
+            <div id="timeProgress">--</div>
+        </div>
+    </div>
+
     <script>
         class ProgressiveVirtualChat {{
             constructor() {{
@@ -393,6 +466,10 @@ class ProgressiveVirtualHTMLGenerator:
                 this.scrollInfo = document.getElementById('scrollInfo');
                 this.segmentIndicator = document.getElementById('segmentIndicator');
                 this.stats = document.getElementById('stats');
+                this.timeScrollbar = document.getElementById('timeScrollbar');
+                this.timeScrollbarThumb = document.getElementById('timeScrollbarThumb');
+                this.currentTimeLabel = document.getElementById('currentTimeLabel');
+                this.timeProgress = document.getElementById('timeProgress');
 
                 this.isLoading = false;
                 this.searchQuery = '';
@@ -404,6 +481,13 @@ class ProgressiveVirtualHTMLGenerator:
                 this.lastScrollHeight = 0; // Track scroll height to prevent infinite loops
                 this.loadedSegments = []; // Track loaded message ranges
                 this.isRendering = false; // Track when we're inside renderMessages() to ignore scroll events
+                
+                // Time-based scrollbar properties
+                this.firstTimestamp = null;
+                this.lastTimestamp = null;
+                this.totalTimeSpan = 0;
+                this.isDraggingTimeScrollbar = false;
+                this.isScrollingFromTimeScrollbar = false;
 
                 // Configuration
                 this.chatFileUrl = '{chat_file_path}';
@@ -419,6 +503,7 @@ class ProgressiveVirtualHTMLGenerator:
 
             init() {{
                 this.setupEventListeners();
+                this.loadTimeRange();
                 this.loadInitialMessages();
             }}
 
@@ -436,6 +521,28 @@ class ProgressiveVirtualHTMLGenerator:
                         this.filterMessages();
                     }}, 300);
                 }});
+
+                // Time-based scrollbar events
+                this.timeScrollbarThumb.addEventListener('mousedown', (e) => {{
+                    this.isDraggingTimeScrollbar = true;
+                    e.preventDefault();
+                }});
+
+                document.addEventListener('mousemove', (e) => {{
+                    if (this.isDraggingTimeScrollbar) {{
+                        this.handleTimeScrollbarDrag(e);
+                    }}
+                }});
+
+                document.addEventListener('mouseup', () => {{
+                    this.isDraggingTimeScrollbar = false;
+                }});
+
+                this.timeScrollbar.addEventListener('click', (e) => {{
+                    if (e.target === this.timeScrollbar) {{
+                        this.handleTimeScrollbarClick(e);
+                    }}
+                }});
             }}
 
             async loadInitialMessages() {{
@@ -447,6 +554,140 @@ class ProgressiveVirtualHTMLGenerator:
                     console.error('Error loading initial messages:', error);
                     this.showError('Error carregant missatges. Assegura\\'t que el servidor està executant-se.');
                 }}
+            }}
+
+            async loadTimeRange() {{
+                try {{
+                    const response = await fetch('/api/time-range');
+                    if (!response.ok) {{
+                        throw new Error(`HTTP error! status: ${{response.status}}`);
+                    }}
+                    const data = await response.json();
+                    
+                    this.firstTimestamp = new Date(data.first_timestamp);
+                    this.lastTimestamp = new Date(data.last_timestamp);
+                    this.totalTimeSpan = this.lastTimestamp - this.firstTimestamp;
+                    
+                    console.log(`Time range: ${{this.firstTimestamp.toISOString()}} to ${{this.lastTimestamp.toISOString()}}`);
+                    console.log(`Total time span: ${{this.totalTimeSpan / (1000 * 60 * 60 * 24)}} days`);
+                    
+                    this.updateTimeScrollbar(0);
+                }} catch (error) {{
+                    console.error('Error loading time range:', error);
+                }}
+            }}
+
+            handleTimeScrollbarClick(e) {{
+                const rect = this.timeScrollbar.getBoundingClientRect();
+                const y = e.clientY - rect.top;
+                const percentage = y / rect.height;
+                this.scrollToTimePercentage(percentage);
+            }}
+
+            handleTimeScrollbarDrag(e) {{
+                const rect = this.timeScrollbar.getBoundingClientRect();
+                const y = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
+                const percentage = y / rect.height;
+                this.scrollToTimePercentage(percentage);
+            }}
+
+            async scrollToTimePercentage(percentage) {{
+                if (!this.firstTimestamp || !this.lastTimestamp) {{
+                    return;
+                }}
+
+                // Calculate target timestamp
+                const targetTime = new Date(this.firstTimestamp.getTime() + (percentage * this.totalTimeSpan));
+                
+                console.log(`Scrolling to time: ${{targetTime.toISOString()}} (${{Math.round(percentage * 100)}}%)`);
+                
+                // Update UI immediately
+                this.updateTimeScrollbar(percentage);
+                this.updateTimeLabels(targetTime, percentage);
+                
+                // Load messages starting from this timestamp
+                this.isScrollingFromTimeScrollbar = true;
+                try {{
+                    const response = await fetch(`/api/messages-by-time?timestamp=${{targetTime.toISOString()}}&limit=${{this.chunkSize}}`);
+                    if (!response.ok) {{
+                        throw new Error(`HTTP error! status: ${{response.status}}`);
+                    }}
+                    const data = await response.json();
+                    
+                    if (data.messages && data.messages.length > 0) {{
+                        // Clear existing messages and load from this point
+                        this.allMessages = data.messages;
+                        this.currentOffset = data.offset + data.messages.length;
+                        this.filteredMessages = [...this.allMessages];
+                        
+                        if (data.total_messages && !this.serverTotalMessages) {{
+                            this.serverTotalMessages = data.total_messages;
+                        }}
+                        
+                        // Reset rendering and scroll to top of new messages
+                        this.messagesContainer.scrollTop = 0;
+                        this.renderMessages();
+                        this.updateStats();
+                    }}
+                }} catch (error) {{
+                    console.error('Error loading messages by time:', error);
+                }} finally {{
+                    this.isScrollingFromTimeScrollbar = false;
+                }}
+            }}
+
+            updateTimeScrollbar(percentage) {{
+                const scrollbarHeight = this.timeScrollbar.offsetHeight;
+                const thumbHeight = 30; // minimum height
+                const maxThumbTop = scrollbarHeight - thumbHeight;
+                
+                const thumbTop = Math.max(0, Math.min(percentage * maxThumbTop, maxThumbTop));
+                this.timeScrollbarThumb.style.top = `${{thumbTop}}px`;
+                this.timeScrollbarThumb.style.height = `${{thumbHeight}}px`;
+            }}
+
+            updateTimeLabels(currentTime, percentage) {{
+                // Format current date
+                const dateStr = currentTime.toLocaleDateString('ca-ES', {{
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                }});
+                this.currentTimeLabel.textContent = dateStr;
+                
+                // Calculate time elapsed
+                const timeElapsed = currentTime - this.firstTimestamp;
+                const daysElapsed = Math.floor(timeElapsed / (1000 * 60 * 60 * 24));
+                const totalDays = Math.floor(this.totalTimeSpan / (1000 * 60 * 60 * 24));
+                
+                this.timeProgress.textContent = `${{daysElapsed}} / ${{totalDays}} dies`;
+            }}
+
+            updateTimeScrollbarFromMessages() {{
+                if (!this.firstTimestamp || !this.lastTimestamp || this.filteredMessages.length === 0) {{
+                    return;
+                }}
+
+                // Get the first visible message
+                const container = this.messagesContainer;
+                const scrollTop = container.scrollTop;
+                const itemHeight = 100; // Approximate message height
+                
+                const visibleIndex = Math.floor(scrollTop / itemHeight);
+                const visibleMessage = this.filteredMessages[Math.min(visibleIndex, this.filteredMessages.length - 1)];
+                
+                if (!visibleMessage || !visibleMessage.timestamp) {{
+                    return;
+                }}
+
+                // Calculate time percentage based on visible message
+                const messageTime = new Date(visibleMessage.timestamp);
+                const timeElapsed = messageTime - this.firstTimestamp;
+                const percentage = Math.max(0, Math.min(1, timeElapsed / this.totalTimeSpan));
+                
+                // Update scrollbar position
+                this.updateTimeScrollbar(percentage);
+                this.updateTimeLabels(messageTime, percentage);
             }}
 
             async loadMessagesChunk() {{
@@ -854,6 +1095,11 @@ class ProgressiveVirtualHTMLGenerator:
                 
                 this.showScrollIndicator();
                 this.updateScrollInfo();
+
+                // Update time-based scrollbar based on visible messages
+                if (!this.isScrollingFromTimeScrollbar) {{
+                    this.updateTimeScrollbarFromMessages();
+                }}
 
                 // Clear existing scroll timeout
                 if (this.scrollTimeout) {{

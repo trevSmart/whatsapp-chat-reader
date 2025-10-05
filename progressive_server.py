@@ -187,6 +187,93 @@ def get_stats():
         'messages_cached': len(server.messages_cache)
     })
 
+@app.route('/api/time-range')
+def get_time_range():
+    """Get the time range of messages (first and last message timestamps)."""
+    global server
+
+    if not server:
+        return jsonify({'error': 'Server not initialized'}), 500
+
+    try:
+        all_messages = server.parser.parse_chat_file(server.chat_file_path)
+        
+        if not all_messages:
+            return jsonify({'error': 'No messages found'}), 404
+        
+        first_message = all_messages[0]
+        last_message = all_messages[-1]
+        
+        return jsonify({
+            'first_timestamp': first_message.timestamp.isoformat(),
+            'last_timestamp': last_message.timestamp.isoformat(),
+            'total_messages': len(all_messages)
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/messages-by-time')
+def get_messages_by_time():
+    """Get message index for a given timestamp (finds closest message)."""
+    global server
+
+    if not server:
+        return jsonify({'error': 'Server not initialized'}), 500
+
+    target_timestamp = request.args.get('timestamp')
+    limit = int(request.args.get('limit', 50))
+
+    if not target_timestamp:
+        return jsonify({'error': 'timestamp parameter required'}), 400
+
+    try:
+        from datetime import datetime
+        target_dt = datetime.fromisoformat(target_timestamp)
+        
+        all_messages = server.parser.parse_chat_file(server.chat_file_path)
+        
+        if not all_messages:
+            return jsonify({'error': 'No messages found'}), 404
+        
+        # Binary search to find the closest message index
+        left, right = 0, len(all_messages) - 1
+        closest_index = 0
+        
+        while left <= right:
+            mid = (left + right) // 2
+            msg_time = all_messages[mid].timestamp
+            
+            if msg_time < target_dt:
+                left = mid + 1
+                closest_index = mid
+            elif msg_time > target_dt:
+                right = mid - 1
+            else:
+                closest_index = mid
+                break
+        
+        # Make sure we found a valid index
+        if left < len(all_messages):
+            closest_index = left
+        
+        # Get messages starting from this index
+        start_idx = max(0, closest_index)
+        end_idx = min(start_idx + limit, len(all_messages))
+        
+        chunk_messages = all_messages[start_idx:end_idx]
+        messages = [server.message_to_dict(msg) for msg in chunk_messages]
+        
+        return jsonify({
+            'messages': messages,
+            'offset': start_idx,
+            'limit': limit,
+            'total_messages': len(all_messages),
+            'has_more': end_idx < len(all_messages)
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/')
 def serve_html():
     """Serve the main HTML file."""
