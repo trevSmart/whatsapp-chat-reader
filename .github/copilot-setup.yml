@@ -19,7 +19,7 @@ This file contains the necessary instructions to set up the Copilot environment 
    ```bash
    pip install flask flask-cors
    ```
-   
+
    Or install all dependencies from requirements.txt:
    ```bash
    pip install -r requirements.txt

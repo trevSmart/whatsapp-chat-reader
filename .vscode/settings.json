@@ -1,0 +1,16 @@
+{
+    "actionButtons": {
+        "commands": [
+            {
+                "name": "$(play) Run",
+                "useVsCodeApi": true,
+                "command": "workbench.action.tasks.runTask",
+                "args": ["echo"],
+                "color": "#66bb66"
+            }
+        ],
+        "defaultColor": "white",
+        "reloadButton": null,
+        "loadNpmCommands": false
+    }
+}
