@@ -187,6 +187,122 @@ def get_stats():
         'messages_cached': len(server.messages_cache)
     })
 
+@app.route('/api/time-range')
+def get_time_range():
+    """Get the time range of messages (first and last message timestamps)."""
+    global server
+
+    if not server:
+        return jsonify({'error': 'Server not initialized'}), 500
+
+    try:
+        all_messages = server.parser.parse_chat_file(server.chat_file_path)
+        
+        if not all_messages:
+            return jsonify({'error': 'No messages found'}), 404
+        
+        first_message = all_messages[0]
+        last_message = all_messages[-1]
+        
+        return jsonify({
+            'first_timestamp': first_message.timestamp.isoformat(),
+            'last_timestamp': last_message.timestamp.isoformat(),
+            'total_messages': len(all_messages)
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/messages-by-time')
+def get_messages_by_time():
+    """Get message index for a given timestamp (finds closest message)."""
+    global server
+
+    if not server:
+        return jsonify({'error': 'Server not initialized'}), 500
+
+    target_timestamp = request.args.get('timestamp')
+    limit = int(request.args.get('limit', 50))
+
+    if not target_timestamp:
+        return jsonify({'error': 'timestamp parameter required'}), 400
+
+    try:
+        from datetime import datetime
+        target_dt = datetime.fromisoformat(target_timestamp.replace('Z', '+00:00'))
+        
+        # Make timezone-naive for comparison (remove timezone info)
+        if target_dt.tzinfo is not None:
+            target_dt = target_dt.replace(tzinfo=None)
+        
+        all_messages = server.parser.parse_chat_file(server.chat_file_path)
+        
+        if not all_messages:
+            return jsonify({'error': 'No messages found'}), 404
+        
+        # Binary search to find the closest message index
+        left, right = 0, len(all_messages) - 1
+        closest_index = 0
+        
+        while left <= right:
+            mid = (left + right) // 2
+            msg_time = all_messages[mid].timestamp
+            
+            # Make sure msg_time is also timezone-naive
+            if msg_time.tzinfo is not None:
+                msg_time = msg_time.replace(tzinfo=None)
+            
+            if msg_time < target_dt:
+                left = mid + 1
+            elif msg_time > target_dt:
+                right = mid - 1
+            else:
+                closest_index = mid
+                break
+        
+        # After binary search, find the truly closest message
+        # Check the message at 'right' (last message before target) and 'left' (first message after target)
+        if left >= len(all_messages):
+            # Target is after all messages, use the last message
+            closest_index = len(all_messages) - 1
+        elif right < 0:
+            # Target is before all messages, use the first message
+            closest_index = 0
+        else:
+            # Compare distances to find the closest
+            left_time = all_messages[left].timestamp
+            if left_time.tzinfo is not None:
+                left_time = left_time.replace(tzinfo=None)
+            left_distance = abs((left_time - target_dt).total_seconds())
+            
+            if right >= 0:
+                right_time = all_messages[right].timestamp
+                if right_time.tzinfo is not None:
+                    right_time = right_time.replace(tzinfo=None)
+                right_distance = abs((right_time - target_dt).total_seconds())
+                
+                # Choose the closer one
+                closest_index = right if right_distance <= left_distance else left
+            else:
+                closest_index = left
+        
+        # Get messages starting from this index
+        start_idx = max(0, closest_index)
+        end_idx = min(start_idx + limit, len(all_messages))
+        
+        chunk_messages = all_messages[start_idx:end_idx]
+        messages = [server.message_to_dict(msg) for msg in chunk_messages]
+        
+        return jsonify({
+            'messages': messages,
+            'offset': start_idx,
+            'limit': limit,
+            'total_messages': len(all_messages),
+            'has_more': end_idx < len(all_messages)
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/')
 def serve_html():
     """Serve the main HTML file."""
