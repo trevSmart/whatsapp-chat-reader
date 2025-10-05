@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "whatsapp-chat-reader"
+version = "1.0.0"
+description = "Una eina per processar xats exportats de WhatsApp i generar documents HTML amb els adjunts integrats"
+readme = "README.md"
+requires-python = ">=3.7"
+license = {text = "MIT"}
+authors = [
+    {name = "Marc Pla", email = "marc.pla@example.com"},
+]
+keywords = ["whatsapp", "chat", "html", "parser", "export"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Communications :: Chat",
+    "Topic :: Text Processing :: Markup :: HTML",
+]
+
+[project.urls]
+Homepage = "https://github.com/marcpla/whatsapp-chat-reader"
+Repository = "https://github.com/marcpla/whatsapp-chat-reader"
+Issues = "https://github.com/marcpla/whatsapp-chat-reader/issues"
+
+[project.scripts]
+whatsapp-chat-reader = "whatsapp_chat_reader.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+whatsapp_chat_reader = ["py.typed"]

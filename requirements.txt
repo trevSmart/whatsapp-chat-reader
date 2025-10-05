@@ -1,0 +1,20 @@
+# WhatsApp Chat Reader - Dependencies
+# This project uses only Python standard library modules
+# No external dependencies required
+
+# The following modules are used from Python standard library:
+# - re (regular expressions)
+# - os (operating system interface)
+# - datetime (date and time handling)
+# - typing (type hints)
+# - dataclasses (data classes)
+# - base64 (base64 encoding)
+# - mimetypes (MIME type detection)
+# - pathlib (path handling)
+# - argparse (command line argument parsing)
+# - webbrowser (opening web pages)
+
+# If you want to add additional features, you might consider:
+# - Pillow (PIL) for advanced image processing
+# - python-dateutil for better date parsing
+# - jinja2 for more advanced HTML templating
