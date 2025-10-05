@@ -9,11 +9,11 @@ import sys
 import json
 import base64
 import mimetypes
+import logging
 from pathlib import Path
 from flask import Flask, jsonify, request, send_file, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
-import logging
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
@@ -22,8 +22,9 @@ from whatsapp_chat_reader.parser import WhatsAppParser
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
-# Configure logging to output error tracebacks to stderr
+# Configure basic logging for server-side diagnostics
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class ProgressiveChatServer:
     def __init__(self, chat_file_path: str, attachment_dir: str = None):
@@ -65,11 +66,12 @@ class ProgressiveChatServer:
             }
 
         except Exception as e:
-            print(f"Error parsing messages chunk: {e}")
+            # Log full exception server-side; do not leak details to clients
+            logger.exception("Error parsing messages chunk")
             return {
                 'messages': [],
                 'has_more': False,
-                'error': str(e)
+                'error': 'Internal server error'
             }
 
     def message_to_dict(self, message):
@@ -217,8 +219,9 @@ def get_time_range():
             'total_messages': len(all_messages)
         })
     except Exception as e:
-        logging.exception("Unhandled exception in get_time_range")
-        return jsonify({'error': 'An internal error has occurred.'}), 500
+        # Log full exception server-side; return generic error to client
+        logger.exception("Error computing time range")
+        return jsonify({'error': 'Internal server error'}), 500
 
 @app.route('/api/messages-by-time')
 def get_messages_by_time():
@@ -309,8 +312,9 @@ def get_messages_by_time():
         })
         
     except Exception as e:
-        logging.exception("Unhandled exception in get_messages_by_time")
-        return jsonify({'error': 'An internal error has occurred.'}), 500
+        # Log full exception server-side; return generic error to client
+        logger.exception("Error fetching messages by time")
+        return jsonify({'error': 'Internal server error'}), 500
 
 @app.route('/')
 def serve_html():
