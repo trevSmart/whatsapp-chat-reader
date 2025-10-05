@@ -107,16 +107,11 @@ class ProgressiveVirtualHTMLGenerator:
             }
 
             .message-content {
-                background: #e7f3ff;
-                padding: 10px 15px;
-                border-radius: 10px;
-                border-top-left-radius: 0;
                 word-wrap: break-word;
                 font-size: 14px;
             }
 
             .message.system .message-content {
-                background: #f0f0f0;
                 color: #666;
                 font-style: italic;
             }
