@@ -250,6 +250,33 @@ python3 progressive_server.py "chat.txt" --attachments "./adjunts" --chat-name "
 open http://localhost:8080
 ```
 
+## 🧪 Testing i Validació
+
+### Exemple de Test Robust
+
+El directori `tests/real-example-test/` conté un exemple real d'un xat de WhatsApp molt gran que serveix per fer tests robustos del sistema. Aquest exemple inclou:
+
+- **Més de 3.400 fitxers** d'adjunts (imatges, àudios, vídeos)
+- **Desenes de milers de missatges** per provar el virtual scrolling
+- **Diferents tipus de contingut** (text, imatges, àudios, vídeos, missatges del sistema)
+- **Múltiples formats de data** per validar el parser
+
+#### Ús de l'Exemple de Test
+```bash
+# Executar servidor amb l'exemple de test
+python3 progressive_server.py "tests/real-example-test/chat.txt" --attachments "tests/real-example-test" --chat-name "Test Chat" --port 8080
+
+# Obrir navegador per provar
+open http://localhost:8080
+```
+
+Aquest exemple permet validar:
+- **Rendiment** amb xats reals molt grans
+- **Virtual scrolling** amb desenes de milers de missatges
+- **Lazy loading** d'adjunts amb centenars de fitxers
+- **Parser robust** amb diferents formats de missatges
+- **Gestió de memòria** en situacions extremes
+
 ## 📈 Estadístiques de Rendiment
 
 ### Abans de l'Optimització
