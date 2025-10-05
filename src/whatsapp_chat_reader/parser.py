@@ -26,7 +26,8 @@ class WhatsAppParser:
         self.attachment_pattern = re.compile(r'\u200e<adjunt:\s+([^>]+)>')
 
         # Pattern to match system messages (like encryption notice)
-        self.system_pattern = re.compile(r'^\[(\d{1,2}/\d{1,2}/\d{2,4})\s+(\d{1,2}:\d{2}:\d{2})\]\s+([^:]+):\s+‎(.*)$')
+        # Note: Lines may start with zero-width characters like \u200e (LEFT-TO-RIGHT MARK)
+        self.system_pattern = re.compile(r'^\u200e?\[(\d{1,2}/\d{1,2}/\d{2,4})\s+(\d{1,2}:\d{2}:\d{2})\]\s+([^:]+):\s+‎(.*)$')
 
     def parse_chat_file(self, file_path: str) -> List[WhatsAppMessage]:
         """Parse a WhatsApp chat export file and return list of messages."""
