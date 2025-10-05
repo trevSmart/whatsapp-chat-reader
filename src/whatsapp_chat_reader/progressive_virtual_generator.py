@@ -512,29 +512,36 @@ class ProgressiveVirtualHTMLGenerator:
 
             addLoadedSegment(start, end) {{
                 // Add a new loaded segment and merge with existing overlapping segments
-                let newSegment = {{ start, end }};
-                const mergedSegments = [];
-                let merged = false;
-
-                for (const segment of this.loadedSegments) {{
-                    // Check if segments overlap or are adjacent
-                    if (newSegment.end >= segment.start && newSegment.start <= segment.end) {{
-                        // Merge segments
-                        newSegment = {{
-                            start: Math.min(newSegment.start, segment.start),
-                            end: Math.max(newSegment.end, segment.end)
-                        }};
-                        merged = true;
-                    }} else {{
-                        mergedSegments.push(segment);
-                    }}
-                }}
-
-                mergedSegments.push(newSegment);
+                // Add the new segment to the list
+                this.loadedSegments.push({{ start, end }});
                 
                 // Sort segments by start position
-                this.loadedSegments = mergedSegments.sort((a, b) => a.start - b.start);
+                this.loadedSegments.sort((a, b) => a.start - b.start);
                 
+                // Merge all overlapping or adjacent segments
+                const mergedSegments = [];
+                let currentSegment = null;
+                
+                for (const segment of this.loadedSegments) {{
+                    if (!currentSegment) {{
+                        // First segment
+                        currentSegment = {{ start: segment.start, end: segment.end }};
+                    }} else if (segment.start <= currentSegment.end) {{
+                        // Overlapping or adjacent - merge by extending the end
+                        currentSegment.end = Math.max(currentSegment.end, segment.end);
+                    }} else {{
+                        // Gap found - save current segment and start a new one
+                        mergedSegments.push(currentSegment);
+                        currentSegment = {{ start: segment.start, end: segment.end }};
+                    }}
+                }}
+                
+                // Don't forget to add the last segment
+                if (currentSegment) {{
+                    mergedSegments.push(currentSegment);
+                }}
+                
+                this.loadedSegments = mergedSegments;
                 console.log('Loaded segments:', this.loadedSegments);
             }}
 
