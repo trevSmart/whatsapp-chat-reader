@@ -14,19 +14,58 @@ Aquesta aplicació processa els fitxers de text exportats de WhatsApp i genera u
 
 ## Instal·lació
 
-No cal instal·lar dependències externes. L'aplicació utilitza només mòduls de la biblioteca estàndard de Python.
+### Instal·lació del paquet (recomanat)
 
 ```bash
 git clone <repository-url>
 cd whatsapp-chat-reader
+pip install -e .
+```
+
+Després de la instal·lació, pots executar:
+
+```bash
+whatsapp-chat-reader chat.txt
+```
+
+### Ús sense instal·lació
+
+Si no vols instal·lar el paquet, pots executar els scripts directament:
+
+```bash
+git clone <repository-url>
+cd whatsapp-chat-reader
+PYTHONPATH=src python3 -m whatsapp_chat_reader.main chat.txt
+```
+
+O usar el servidor progressiu:
+
+```bash
+python3 progressive_server.py chat.txt
 ```
 
 ## Ús
 
-### Ús bàsic
+### Ús amb servidor progressiu (recomanat per xats grans)
 
 ```bash
-python whatsapp_chat_reader.py chat.txt
+python progressive_server.py chat.txt --attachments ./adjunts --chat-name "El meu xat" --port 8080
+```
+
+Això iniciarà un servidor Flask que carrega els missatges progressivament, ideal per xats amb desenes de milers de missatges.
+
+### Ús bàsic (generador HTML estàtic)
+
+Si has instal·lat el paquet:
+
+```bash
+whatsapp-chat-reader chat.txt
+```
+
+O sense instal·lar:
+
+```bash
+PYTHONPATH=src python3 -m whatsapp_chat_reader.main chat.txt
 ```
 
 Això generarà un fitxer `chat.html` al mateix directori que el fitxer del xat.
@@ -34,7 +73,13 @@ Això generarà un fitxer `chat.html` al mateix directori que el fitxer del xat.
 ### Opcions avançades
 
 ```bash
-python whatsapp_chat_reader.py chat.txt --output mi_xat.html --chat-name "Xat amb Noemí" --open
+whatsapp-chat-reader chat.txt --output mi_xat.html --chat-name "Xat amb Noemí" --open
+```
+
+O sense instal·lar:
+
+```bash
+PYTHONPATH=src python3 -m whatsapp_chat_reader.main chat.txt --output mi_xat.html --chat-name "Xat amb Noemí" --open
 ```
 
 #### Paràmetres disponibles:
@@ -48,17 +93,23 @@ python whatsapp_chat_reader.py chat.txt --output mi_xat.html --chat-name "Xat am
 ### Exemples d'ús
 
 ```bash
-# Processar un xat amb el nom per defecte
-python whatsapp_chat_reader.py chat.txt
+# Processar un xat amb el nom per defecte (amb paquet instal·lat)
+whatsapp-chat-reader chat.txt
+
+# O sense instal·lar
+PYTHONPATH=src python3 -m whatsapp_chat_reader.main chat.txt
 
 # Especificar el nom del xat i obrir-lo
-python whatsapp_chat_reader.py chat.txt --chat-name "Xat familiar" --open
+whatsapp-chat-reader chat.txt --chat-name "Xat familiar" --open
 
 # Utilitzar un directori diferent per als adjunts
-python whatsapp_chat_reader.py chat.txt --attachments-dir ./media
+whatsapp-chat-reader chat.txt --attachments-dir ./media
 
 # Generar amb un nom personalitzat
-python whatsapp_chat_reader.py chat.txt --output conversa_2021.html --chat-name "Conversa 2021"
+whatsapp-chat-reader chat.txt --output conversa_2021.html --chat-name "Conversa 2021"
+
+# Usar servidor progressiu per xats grans (recomanat)
+python progressive_server.py chat.txt --attachments ./adjunts --chat-name "Xat gran" --port 8080
 ```
 
 ## Format dels xats de WhatsApp
@@ -97,11 +148,17 @@ Els adjunts es detecten automàticament pel patró `‎<adjunt: nom_del_fitxer>`
 
 ```
 whatsapp-chat-reader/
-├── whatsapp_chat_reader.py    # Script principal
-├── whatsapp_parser.py         # Parser per processar els missatges
-├── html_generator.py          # Generador de documents HTML
-├── requirements.txt           # Dependències (només biblioteca estàndard)
-└── README.md                 # Aquesta documentació
+├── src/
+│   └── whatsapp_chat_reader/
+│       ├── __init__.py                        # Mòdul principal
+│       ├── parser.py                          # Parser per processar els missatges
+│       ├── html_generator.py                  # Generador de documents HTML
+│       ├── progressive_virtual_generator.py   # Generador HTML progressiu amb virtual scrolling
+│       └── main.py                            # Script principal
+├── progressive_server.py                      # Servidor Flask per lectura progressiva
+├── requirements.txt                           # Dependències
+├── setup.py                                   # Configuració del paquet
+└── README.md                                  # Aquesta documentació
 ```
 
 ## Característiques

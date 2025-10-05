@@ -36,7 +36,7 @@ setup(
     python_requires=">=3.7",
     entry_points={
         "console_scripts": [
-            "whatsapp-chat-reader=whatsapp_chat_reader.whatsapp_chat_reader:main",
+            "whatsapp-chat-reader=whatsapp_chat_reader.main:main",
         ],
     },
     include_package_data=True,
