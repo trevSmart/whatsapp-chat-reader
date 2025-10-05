@@ -16,10 +16,10 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Exemples d'ús:
-  python whatsapp_chat_reader.py chat.txt
-  python whatsapp_chat_reader.py chat.txt --output chat.html
-  python whatsapp_chat_reader.py chat.txt --attachments-dir ./attachments
-  python whatsapp_chat_reader.py chat.txt --chat-name "Xat amb Noemí"
+  python -m whatsapp_chat_reader.main chat.txt
+  python -m whatsapp_chat_reader.main chat.txt --output chat.html
+  python -m whatsapp_chat_reader.main chat.txt --attachments-dir ./attachments
+  python -m whatsapp_chat_reader.main chat.txt --chat-name "Xat amb Noemí"
         """
     )
 

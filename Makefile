@@ -42,4 +42,4 @@ dist: build ## Crea distribució
 	twine check dist/*
 
 example: ## Executa l'exemple
-	python whatsapp_chat_reader.py examples/exemple_chat.txt --attachments-dir examples --output examples/exemple_output.html --open
+	PYTHONPATH=src python3 -m whatsapp_chat_reader.main examples/exemple_chat.txt --attachments-dir examples --output examples/exemple_output.html --open
