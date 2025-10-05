@@ -390,8 +390,8 @@ class ProgressiveVirtualHTMLGenerator:
 
             .time-mark-label {
                 position: absolute;
-                left: 100%;
-                margin-left: 5px;
+                right: 100%;
+                margin-right: 5px;
                 font-size: 9px;
                 color: #666;
                 white-space: nowrap;
