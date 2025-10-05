@@ -1,71 +1,46 @@
-version: 1
-copilot:
-  assistant:
-    language: ca  # Comunicació amb l'usuari en Català
-    code_language: en  # Codi (noms i comentaris) en Anglès
-    style:
-      code_naming: camelCase
-      comments: only_non_obvious
-      verbosity: high_readability
-    communication:
-      default_language: ca
-      markdown:
-        headings: "##/### only"
-        bold_for_highlights: true
-        code_references: true
-      diagrams:
-        tool: mermaid
-        export:
-          format: png
-          open_command: open
-  rules:
-    - "Never modify files outside the repository root."
-    - "Use tmp/ for temporary files and delete them when no longer needed."
-    - "Do not expose internal implementation details in README or user docs."
-    - "When showing existing code, use code references with: ```startLine:endLine:filepath ...```."
-    - "For new or proposed code, use standard fenced blocks with a language tag."
-    - "Use backticks for file, directory, class and function names."
-    - "All code entities must be in English and use camelCase."
-  tasks:
-    - name: Setup environment
-      steps:
-        - "python3 -m venv venv_new"
-        - "source venv_new/bin/activate"
-        - "pip install -r requirements.txt"
-    - name: Run server (local test dataset)
-      steps:
-        - "source venv_new/bin/activate"
-        - "python3 progressive_server.py \"tests/real-example-test/_chat.txt\" --attachments \"tests/real-example-test\" --chat-name \"Test Chat\" --port 8080"
-        - "open http://localhost:8080"
-    - name: Run tests
-      steps:
-        - "source venv_new/bin/activate"
-        - "pytest -q"
-  guardrails:
-    file_modification:
-      forbidden_paths:
-        - "venv_new/"
-        - "src/whatsapp_chat_reader.egg-info/"
-      allowed_temporary_dir: "tmp/"
-    performance:
-      avoid:
-        - "Single huge HTML pages embedding all messages"
-      prefer:
-        - "Progressive server returning 50-message chunks"
-        - "Virtual scrolling rendering only visible messages"
-        - "Scroll debounce of 300ms and throttled re-rendering"
-    pull_requests:
-      commit_style: "concise, imperative"
-      title_prefix: "Copilot:"
-      require_status_checks: false
-  knowledge:
-    key_endpoints:
-      - "GET /api/messages"
-      - "GET /api/attachment/<filename>"
-      - "GET /api/stats"
-    run_commands:
-      activate: "source venv_new/bin/activate"
-      server_default_chat: "python3 progressive_server.py \"_chat.txt\" --attachments \"./adjunts\" --chat-name \"El meu xat\" --port 8080"
-      server_test_chat: "python3 progressive_server.py \"tests/real-example-test/_chat.txt\" --attachments \"tests/real-example-test\" --chat-name \"Test Chat\" --port 8080"
-    testing_example:
-      path: "tests/real-example-test/"
+# Copilot Environment Setup Instructions for WhatsApp Chat Reader
+
+This file contains the necessary instructions to set up the Copilot environment for the WhatsApp Chat Reader project.
+
+## Prerequisites
+- Ensure you have GitHub Copilot enabled in your GitHub account.
+- Python 3.8 or higher installed on your system.
+- pip (Python package installer) available.
+
+## Setup Steps
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/trevSmart/whatsapp-chat-reader.git
+   cd whatsapp-chat-reader
+   ```
+
+2. **Install Dependencies**:
+   Install Flask and other required Python packages:
+   ```bash
+   pip install flask flask-cors
+   ```
+   
+   Or install all dependencies from requirements.txt:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Install the package in development mode**:
+   ```bash
+   pip install -e .
+   ```
+
+4. **Configure Copilot**:
+   - Open your IDE with GitHub Copilot support.
+   - Sign in with your GitHub account.
+   - Enable GitHub Copilot in your IDE settings.
+
+5. **Start Coding**:
+   Begin using GitHub Copilot to assist you in the development of the WhatsApp Chat Reader project.
+
+## Additional Resources
+- [GitHub Copilot Documentation](https://docs.github.com/en/copilot)
+- [WhatsApp Chat Reader Documentation](https://github.com/trevSmart/whatsapp-chat-reader/blob/main/README.md)
+- [Flask Documentation](https://flask.palletsprojects.com/)
+
+Happy Coding!
