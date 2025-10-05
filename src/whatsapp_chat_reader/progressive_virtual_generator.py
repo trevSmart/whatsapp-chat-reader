@@ -629,6 +629,9 @@ class ProgressiveVirtualHTMLGenerator:
                         this.currentOffset = data.offset + data.messages.length;
                         this.filteredMessages = [...this.allMessages];
                         
+                        // Reset the isEndOfFile flag since we're jumping to a new position
+                        this.isEndOfFile = false;
+                        
                         if (data.total_messages && !this.serverTotalMessages) {{
                             this.serverTotalMessages = data.total_messages;
                         }}
