@@ -132,7 +132,6 @@ dmypy.json
 *.html
 tmp/
 attachments/
-*.txt
 !examples/*.txt
 !README.md
 !requirements.txt

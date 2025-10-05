@@ -1,0 +1,8 @@
+# Development requirements
+-r requirements.txt
+
+# Additional development tools
+pre-commit>=2.0.0
+tox>=3.0.0
+sphinx>=4.0.0
+sphinx-rtd-theme>=1.0.0
