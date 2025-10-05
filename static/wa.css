@@ -2,7 +2,7 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f0f0f0;
+    background-color: #ece5dd;
     line-height: 1.6;
 }
 
@@ -56,6 +56,7 @@ body {
     overflow-y: auto;
     padding: 20px;
     position: relative;
+    background-color: #ece5dd;
 }
 
 .loading {
@@ -65,57 +66,113 @@ body {
 }
 
 .message {
-    margin-bottom: 15px;
+    margin-bottom: 8px;
     display: flex;
     flex-direction: column;
     opacity: 0;
     animation: fadeIn 0.3s ease-in forwards;
+    clear: both;
+}
+
+/* Incoming messages (left-aligned, white bubble) */
+.message.incoming {
+    align-items: flex-start;
+}
+
+/* Outgoing messages (right-aligned, green bubble) */
+.message.outgoing {
+    align-items: flex-end;
 }
 
 @keyframes fadeIn {
     to { opacity: 1; }
 }
 
-.message-header {
-    font-size: 12px;
-    color: #666;
-    margin-bottom: 5px;
-    display: flex;
-    justify-content: space-between;
+.message-wrapper {
+    max-width: 65%;
+    position: relative;
+}
+
+.message.incoming .message-wrapper {
+    background: #ffffff;
+    border-radius: 8px;
+    border-top-left-radius: 0;
+    padding: 6px 7px 8px 9px;
+    box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
+}
+
+.message.outgoing .message-wrapper {
+    background: #dcf8c6;
+    border-radius: 8px;
+    border-top-right-radius: 0;
+    padding: 6px 7px 8px 9px;
+    box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
+}
+
+.message.system {
     align-items: center;
 }
 
+.message.system .message-wrapper {
+    background: #d9fdd3;
+    border-radius: 8px;
+    padding: 8px 12px;
+    max-width: 80%;
+    text-align: center;
+    box-shadow: none;
+}
+
+.message-header {
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.message.incoming .message-header {
+    display: block;
+}
+
+.message.outgoing .message-header {
+    display: none;
+}
+
+.message.system .message-header {
+    display: none;
+}
+
 .sender {
-    font-weight: bold;
+    font-weight: 600;
     color: #075e54;
 }
 
-.timestamp {
-    color: #999;
-}
-
 .message-content {
-    background: #e7f3ff;
-    padding: 10px 15px;
-    border-radius: 10px;
-    border-top-left-radius: 0;
     word-wrap: break-word;
-    font-size: 14px;
+    font-size: 14.2px;
+    line-height: 19px;
+    color: #303030;
+    margin-bottom: 0;
 }
 
 .message.system .message-content {
-    background: #f0f0f0;
-    color: #666;
-    font-style: italic;
+    color: #54656f;
+    font-size: 12.5px;
+    font-style: normal;
+}
+
+.timestamp {
+    font-size: 11px;
+    color: rgba(0, 0, 0, 0.45);
+    float: right;
+    margin-top: -3px;
+    margin-left: 8px;
+    padding-left: 4px;
 }
 
 .attachments {
-    margin-top: 10px;
+    margin-top: 4px;
 }
 
 .attachment {
-    margin-bottom: 10px;
-    border: 1px solid #ddd;
+    margin-bottom: 4px;
     border-radius: 8px;
     overflow: hidden;
 }
@@ -124,52 +181,53 @@ body {
     max-width: 100%;
     height: auto;
     display: block;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    margin: 5px 0;
+    border-radius: 4px;
 }
 
 .attachment video {
     max-width: 100%;
     height: auto;
     display: block;
+    border-radius: 4px;
 }
 
 .attachment audio {
     width: 100%;
-    margin: 10px 0;
+    margin: 4px 0;
 }
 
 .attachment-file {
-    padding: 15px;
-    background: #f8f9fa;
+    padding: 8px;
+    background: transparent;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
+    border-radius: 4px;
 }
 
 .file-icon {
-    font-size: 24px;
+    font-size: 20px;
     color: #075e54;
 }
 
 .file-info { flex: 1; }
 
 .file-name {
-    font-weight: bold;
-    color: #333;
+    font-weight: 500;
+    color: #303030;
+    font-size: 13px;
 }
 
 .file-size {
-    font-size: 12px;
-    color: #666;
+    font-size: 11px;
+    color: rgba(0, 0, 0, 0.45);
 }
 
 .download-link {
     color: #075e54;
     text-decoration: none;
-    font-size: 12px;
-    padding: 5px 10px;
+    font-size: 11px;
+    padding: 4px 8px;
     border: 1px solid #075e54;
     border-radius: 4px;
     transition: all 0.3s;
@@ -235,23 +293,23 @@ body {
 .segment.unloaded { background: #e57373; }
 
 .attachment-placeholder {
-    padding: 20px;
+    padding: 12px;
     text-align: center;
-    background: #f8f9fa;
-    border: 2px dashed #ddd;
-    border-radius: 8px;
+    background: transparent;
+    border: 1px dashed rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
     cursor: pointer;
     transition: all 0.3s;
 }
 
 .attachment-placeholder:hover {
-    background: #e9ecef;
+    background: rgba(0, 0, 0, 0.05);
     border-color: #075e54;
 }
 
-.attachment-placeholder .icon { font-size: 32px; margin-bottom: 10px; color: #075e54; }
-.attachment-placeholder .text { font-weight: bold; color: #333; margin-bottom: 5px; }
-.attachment-placeholder .subtext { font-size: 12px; color: #666; }
+.attachment-placeholder .icon { font-size: 24px; margin-bottom: 6px; color: #075e54; }
+.attachment-placeholder .text { font-weight: 500; color: #303030; margin-bottom: 3px; font-size: 13px; }
+.attachment-placeholder .subtext { font-size: 11px; color: rgba(0, 0, 0, 0.45); }
 
 .server-info {
     background: #e3f2fd;
@@ -359,9 +417,9 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px;
-    background: #dcf8c6;
-    border-radius: 12px;
+    padding: 8px;
+    background: transparent;
+    border-radius: 8px;
 }
 
 .wa-play {
