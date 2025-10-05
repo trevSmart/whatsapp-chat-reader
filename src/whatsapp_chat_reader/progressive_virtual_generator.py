@@ -234,20 +234,29 @@ class ProgressiveVirtualHTMLGenerator:
                 border-left: 4px solid #c62828;
             }
 
-            .progress-bar {
+            .segment-indicator {
                 width: 100%;
-                height: 4px;
+                height: 8px;
                 background: #e0e0e0;
                 border-radius: 2px;
-                overflow: hidden;
                 margin: 10px 0;
+                position: relative;
+                display: flex;
             }
 
-            .progress-fill {
+            .segment {
                 height: 100%;
-                background: #075e54;
-                transition: width 0.3s ease;
-                width: 0%;
+                transition: background-color 0.3s ease;
+                border-right: 1px solid #fff;
+                box-sizing: border-box;
+            }
+
+            .segment.loaded {
+                background: #4caf50;
+            }
+
+            .segment.unloaded {
+                background: #f44336;
             }
 
             .attachment-placeholder {
@@ -357,8 +366,8 @@ class ProgressiveVirtualHTMLGenerator:
 
         <div class="search-container">
             <input type="text" class="search-input" placeholder="Cerca missatges..." id="searchInput">
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
+            <div class="segment-indicator" id="segmentIndicator">
+                <!-- Segments will be dynamically generated -->
             </div>
         </div>
 
@@ -382,7 +391,7 @@ class ProgressiveVirtualHTMLGenerator:
                 this.searchInput = document.getElementById('searchInput');
                 this.scrollIndicator = document.getElementById('scrollIndicator');
                 this.scrollInfo = document.getElementById('scrollInfo');
-                this.progressFill = document.getElementById('progressFill');
+                this.segmentIndicator = document.getElementById('segmentIndicator');
                 this.stats = document.getElementById('stats');
 
                 this.isLoading = false;
@@ -393,6 +402,7 @@ class ProgressiveVirtualHTMLGenerator:
                 this.loadedAttachmentsContent = new Map(); // Store actual content (data URLs)
                 this.scrollTimeout = null;
                 this.lastScrollHeight = 0; // Track scroll height to prevent infinite loops
+                this.loadedSegments = []; // Track loaded message ranges
                 this.isRendering = false; // Track when we're inside renderMessages() to ignore scroll events
 
                 // Configuration
@@ -457,6 +467,14 @@ class ProgressiveVirtualHTMLGenerator:
                     const data = await response.json();
 
                     if (data.messages && data.messages.length > 0) {{
+                        // Record the segment that was loaded
+                        // Use data.offset from server response to ensure accuracy
+                        const segmentStart = data.offset;
+                        const segmentEnd = data.offset + data.messages.length;
+                        
+                        // Add to loaded segments (merge if overlapping with existing segments)
+                        this.addLoadedSegment(segmentStart, segmentEnd);
+                        
                         this.allMessages.push(...data.messages);
                         this.currentOffset += data.messages.length;
                         this.totalMessages += data.messages.length;
@@ -477,7 +495,7 @@ class ProgressiveVirtualHTMLGenerator:
                             this.renderMessages();
                         }}
 
-                        this.updateProgress();
+                        this.updateSegments();
                         this.updateStats();
                     }} else {{
                         this.isEndOfFile = true;
@@ -492,17 +510,91 @@ class ProgressiveVirtualHTMLGenerator:
                 }}
             }}
 
-            updateProgress() {{
-                // Calculate progress based on actual total messages from server
-                if (this.serverTotalMessages && this.serverTotalMessages > 0) {{
-                    const progress = Math.min(100, (this.totalMessages / this.serverTotalMessages) * 100);
-                    this.progressFill.style.width = `${{progress}}%`;
-                    console.log(`Progress: ${{this.totalMessages}}/${{this.serverTotalMessages}} (${{progress.toFixed(1)}}%)`);
-                }} else {{
-                    // Fallback: show progress based on loaded messages (for backwards compatibility)
-                    const progress = Math.min(100, (this.totalMessages / 1000) * 100);
-                    this.progressFill.style.width = `${{progress}}%`;
+            addLoadedSegment(start, end) {{
+                // Add a new loaded segment and merge with existing overlapping segments
+                // Add the new segment to the list
+                this.loadedSegments.push({{ start, end }});
+                
+                // Sort segments by start position
+                this.loadedSegments.sort((a, b) => a.start - b.start);
+                
+                // Merge all overlapping or adjacent segments
+                const mergedSegments = [];
+                let currentSegment = null;
+                
+                for (const segment of this.loadedSegments) {{
+                    if (!currentSegment) {{
+                        // First segment
+                        currentSegment = {{ start: segment.start, end: segment.end }};
+                    }} else if (segment.start <= currentSegment.end) {{
+                        // Overlapping or adjacent - merge by extending the end
+                        currentSegment.end = Math.max(currentSegment.end, segment.end);
+                    }} else {{
+                        // Gap found - save current segment and start a new one
+                        mergedSegments.push(currentSegment);
+                        currentSegment = {{ start: segment.start, end: segment.end }};
+                    }}
                 }}
+                
+                // Don't forget to add the last segment
+                if (currentSegment) {{
+                    mergedSegments.push(currentSegment);
+                }}
+                
+                this.loadedSegments = mergedSegments;
+                console.log('Loaded segments:', this.loadedSegments);
+            }}
+
+            updateSegments() {{
+                // Update the loaded segments tracking
+                // Note: We track segments based on message indices in the TOTAL chat
+                // The allMessages array contains messages we've loaded, but they might not be continuous
+                
+                if (!this.serverTotalMessages || this.serverTotalMessages === 0) {{
+                    return;
+                }}
+
+                // Render segments visualization
+                this.renderSegments();
+            }}
+
+            renderSegments() {{
+                if (!this.serverTotalMessages || this.serverTotalMessages === 0) {{
+                    return;
+                }}
+
+                // Calculate number of segments to display (e.g., 100 segments for the whole chat)
+                const numSegments = 100;
+                const messagesPerSegment = Math.ceil(this.serverTotalMessages / numSegments);
+
+                this.segmentIndicator.innerHTML = '';
+
+                // Create segments
+                for (let i = 0; i < numSegments; i++) {{
+                    const segmentStart = i * messagesPerSegment;
+                    const segmentEnd = Math.min((i + 1) * messagesPerSegment, this.serverTotalMessages);
+                    
+                    // Check if this segment is loaded
+                    const isLoaded = this.isSegmentLoaded(segmentStart, segmentEnd);
+                    
+                    const segment = document.createElement('div');
+                    segment.className = `segment ${{isLoaded ? 'loaded' : 'unloaded'}}`;
+                    segment.style.flex = '1';
+                    segment.title = `Messages ${{segmentStart}}-${{segmentEnd}}: ${{isLoaded ? 'Loaded' : 'Not loaded'}}`;
+                    
+                    this.segmentIndicator.appendChild(segment);
+                }}
+            }}
+
+            isSegmentLoaded(segmentStart, segmentEnd) {{
+                // Check if any messages in this segment range are loaded
+                for (const segment of this.loadedSegments) {{
+                    // Check if there's any overlap between the segment range and loaded range
+                    if (segment.start < segmentEnd && segment.end > segmentStart) {{
+                        return true;
+                    }}
+                }}
+                return false;
             }}
 
             updateStats() {{
