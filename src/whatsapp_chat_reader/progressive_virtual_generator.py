@@ -151,6 +151,66 @@ class ProgressiveVirtualHTMLGenerator:
                 margin: 10px 0;
             }
 
+            /* WhatsApp-like audio player */
+            .wa-audio {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px;
+                background: #dcf8c6; /* WhatsApp outgoing bubble */
+                border-radius: 12px;
+            }
+
+            .wa-audio .wa-play {
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                background: #25d366;
+                color: #fff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                flex-shrink: 0;
+            }
+
+            .wa-audio .wa-wave {
+                flex: 1;
+                height: 28px;
+                position: relative;
+                display: grid;
+                grid-auto-flow: column;
+                grid-auto-columns: 2px;
+                align-items: end;
+                gap: 2px;
+            }
+
+            .wa-audio .wa-wave span {
+                display: block;
+                width: 2px;
+                background: #34b7f1;
+                height: 6px;
+                border-radius: 1px;
+            }
+
+            .wa-audio .wa-progress {
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.08);
+                width: 0%;
+                pointer-events: none;
+                border-radius: 2px;
+            }
+
+            .wa-audio .wa-time {
+                font-size: 12px;
+                color: #3b4a54;
+                width: 42px;
+                text-align: right;
+            }
+
             .attachment-file {
                 padding: 15px;
                 background: #f8f9fa;
@@ -1073,6 +1133,9 @@ class ProgressiveVirtualHTMLGenerator:
                     this.updateTimeScrollbarFromMessages();
                 }}
 
+                // Initialize custom audio players in the newly rendered DOM
+                this.initAudioPlayers(this.messagesContainer);
+
                 // Clear flag - we're done rendering
                 this.isRendering = false;
             }}
@@ -1149,9 +1212,14 @@ class ProgressiveVirtualHTMLGenerator:
                 }} else if (attachment.type === 'audio') {{
                     return `
                         <div class="attachment">
-                            <audio controls preload="none" style="width: 100%;" src="/api/attachment/${{attachment.name}}">
-                                El teu navegador no suporta el tag d'àudio.
-                            </audio>
+                            <div class="wa-audio" data-audio-src="/api/attachment/${{attachment.name}}">
+                                <button class="wa-play" aria-label="Play" data-state="paused">▶</button>
+                                <div class="wa-wave">
+                                    <div class="wa-progress"></div>
+                                    ${{Array.from({length: 40}).map((_, i) => `<span style="height: ${{6 + (i % 8) * 2}}px"></span>`).join('')}}
+                                </div>
+                                <span class="wa-time" data-time>0:00</span>
+                            </div>
                             <div class="attachment-file">
                                 <span class="file-icon">🎵</span>
                                 <div class="file-info">
@@ -1248,6 +1316,68 @@ class ProgressiveVirtualHTMLGenerator:
                             placeholder.style.display = 'none';
                         }}
                     }}
+                }});
+
+                // Re-init audio players for restored content
+                this.initAudioPlayers(this.messagesContainer);
+            }}
+
+            // Initialize WhatsApp-like audio players found in a container
+            initAudioPlayers(container = this.messagesContainer) {{
+                const players = container.querySelectorAll('.wa-audio:not([data-init])');
+                players.forEach(player => {{
+                    player.setAttribute('data-init', 'true');
+                    const src = player.getAttribute('data-audio-src');
+                    const audio = new Audio(src);
+                    audio.preload = 'metadata';
+
+                    const playBtn = player.querySelector('.wa-play');
+                    const timeEl = player.querySelector('[data-time]');
+                    const progressEl = player.querySelector('.wa-progress');
+
+                    // Store audio reference on element
+                    player._audio = audio;
+
+                    const formatTime = (secs) => {{
+                        if (!isFinite(secs)) return '0:00';
+                        const m = Math.floor(secs / 60);
+                        const s = Math.floor(secs % 60).toString().padStart(2, '0');
+                        return `${{m}}:${{s}}`;
+                    }};
+
+                    playBtn.addEventListener('click', () => {{
+                        if (audio.paused) {{
+                            // Pause any other playing audio in view
+                            this.messagesContainer.querySelectorAll('.wa-audio').forEach(p => {{
+                                if (p !== player && p._audio && !p._audio.paused) {{
+                                    p._audio.pause();
+                                    const b = p.querySelector('.wa-play');
+                                    if (b) b.textContent = '▶';
+                                }}
+                            }});
+                            audio.play();
+                            playBtn.textContent = '⏸';
+                        }} else {{
+                            audio.pause();
+                            playBtn.textContent = '▶';
+                        }}
+                    }});
+
+                    audio.addEventListener('loadedmetadata', () => {{
+                        timeEl.textContent = formatTime(audio.duration);
+                    }});
+
+                    audio.addEventListener('timeupdate', () => {{
+                        const pct = (audio.currentTime / (audio.duration || 1)) * 100;
+                        progressEl.style.width = pct + '%';
+                        timeEl.textContent = formatTime(Math.max(0, audio.duration - audio.currentTime));
+                    }});
+
+                    audio.addEventListener('ended', () => {{
+                        playBtn.textContent = '▶';
+                        progressEl.style.width = '0%';
+                        timeEl.textContent = formatTime(audio.duration);
+                    }});
                 }});
             }}
 
