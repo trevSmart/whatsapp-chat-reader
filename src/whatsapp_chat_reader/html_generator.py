@@ -93,6 +93,8 @@ class HTMLGenerator:
 
             .attachment img {
                 max-width: 100%;
+                max-height: 350px;
+                width: auto;
                 height: auto;
                 display: block;
                 border-radius: 8px;
