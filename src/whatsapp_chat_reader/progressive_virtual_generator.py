@@ -332,6 +332,15 @@ class ProgressiveVirtualHTMLGenerator:
                 min-height: 30px;
                 transition: background 0.2s;
                 cursor: grab;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 10px;
+                font-weight: bold;
+                padding: 2px;
+                text-align: center;
+                line-height: 1.2;
             }
 
             .time-scrollbar-thumb:hover {
@@ -571,7 +580,7 @@ class ProgressiveVirtualHTMLGenerator:
                     console.log(`Time range: ${{this.firstTimestamp.toISOString()}} to ${{this.lastTimestamp.toISOString()}}`);
                     console.log(`Total time span: ${{this.totalTimeSpan / (1000 * 60 * 60 * 24)}} days`);
                     
-                    this.updateTimeScrollbar(0);
+                    this.updateTimeScrollbar(0, this.firstTimestamp);
                 }} catch (error) {{
                     console.error('Error loading time range:', error);
                 }}
@@ -602,7 +611,7 @@ class ProgressiveVirtualHTMLGenerator:
                 console.log(`Scrolling to time: ${{targetTime.toISOString()}} (${{Math.round(percentage * 100)}}%)`);
                 
                 // Update UI immediately
-                this.updateTimeScrollbar(percentage);
+                this.updateTimeScrollbar(percentage, targetTime);
                 this.updateTimeLabels(targetTime, percentage);
                 
                 // Load messages starting from this timestamp
@@ -636,7 +645,7 @@ class ProgressiveVirtualHTMLGenerator:
                 }}
             }}
 
-            updateTimeScrollbar(percentage) {{
+            updateTimeScrollbar(percentage, currentTime = null) {{
                 const scrollbarHeight = this.timeScrollbar.offsetHeight;
                 const thumbHeight = 30; // minimum height
                 const maxThumbTop = scrollbarHeight - thumbHeight;
@@ -644,6 +653,16 @@ class ProgressiveVirtualHTMLGenerator:
                 const thumbTop = Math.max(0, Math.min(percentage * maxThumbTop, maxThumbTop));
                 this.timeScrollbarThumb.style.top = `${{thumbTop}}px`;
                 this.timeScrollbarThumb.style.height = `${{thumbHeight}}px`;
+                
+                // Update thumb text with date if provided
+                if (currentTime) {{
+                    const dateStr = currentTime.toLocaleDateString('ca-ES', {{
+                        day: 'numeric',
+                        month: 'short',
+                        year: '2-digit'
+                    }});
+                    this.timeScrollbarThumb.textContent = dateStr;
+                }}
             }}
 
             updateTimeLabels(currentTime, percentage) {{
@@ -686,7 +705,7 @@ class ProgressiveVirtualHTMLGenerator:
                 const percentage = Math.max(0, Math.min(1, timeElapsed / this.totalTimeSpan));
                 
                 // Update scrollbar position
-                this.updateTimeScrollbar(percentage);
+                this.updateTimeScrollbar(percentage, messageTime);
                 this.updateTimeLabels(messageTime, percentage);
             }}
 

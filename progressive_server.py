@@ -253,16 +253,37 @@ def get_messages_by_time():
             
             if msg_time < target_dt:
                 left = mid + 1
-                closest_index = mid
             elif msg_time > target_dt:
                 right = mid - 1
             else:
                 closest_index = mid
                 break
         
-        # Make sure we found a valid index
-        if left < len(all_messages):
-            closest_index = left
+        # After binary search, find the truly closest message
+        # Check the message at 'right' (last message before target) and 'left' (first message after target)
+        if left >= len(all_messages):
+            # Target is after all messages, use the last message
+            closest_index = len(all_messages) - 1
+        elif right < 0:
+            # Target is before all messages, use the first message
+            closest_index = 0
+        else:
+            # Compare distances to find the closest
+            left_time = all_messages[left].timestamp
+            if left_time.tzinfo is not None:
+                left_time = left_time.replace(tzinfo=None)
+            left_distance = abs((left_time - target_dt).total_seconds())
+            
+            if right >= 0:
+                right_time = all_messages[right].timestamp
+                if right_time.tzinfo is not None:
+                    right_time = right_time.replace(tzinfo=None)
+                right_distance = abs((right_time - target_dt).total_seconds())
+                
+                # Choose the closer one
+                closest_index = right if right_distance <= left_distance else left
+            else:
+                closest_index = left
         
         # Get messages starting from this index
         start_idx = max(0, closest_index)
