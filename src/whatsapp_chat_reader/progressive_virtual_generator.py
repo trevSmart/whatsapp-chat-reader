@@ -111,6 +111,7 @@ class ProgressiveVirtualHTMLGenerator:
                 border-radius: 10px;
                 border-top-left-radius: 0;
                 word-wrap: break-word;
+                font-size: 14px;
             }
 
             .message.system .message-content {
@@ -236,7 +237,7 @@ class ProgressiveVirtualHTMLGenerator:
 
             .segment-indicator {
                 width: 100%;
-                height: 8px;
+                height: 4px;
                 background: #e0e0e0;
                 border-radius: 2px;
                 margin: 10px 0;
@@ -247,16 +248,15 @@ class ProgressiveVirtualHTMLGenerator:
             .segment {
                 height: 100%;
                 transition: background-color 0.3s ease;
-                border-right: 1px solid #fff;
                 box-sizing: border-box;
             }
 
             .segment.loaded {
-                background: #4caf50;
+                background: #81c784;
             }
 
             .segment.unloaded {
-                background: #f44336;
+                background: #e57373;
             }
 
             .attachment-placeholder {
@@ -305,7 +305,7 @@ class ProgressiveVirtualHTMLGenerator:
                 right: 0;
                 top: 0;
                 bottom: 0;
-                width: 60px;
+                width: 120px;
                 background: rgba(0, 0, 0, 0.1);
                 z-index: 1000;
                 display: flex;
@@ -523,7 +523,7 @@ class ProgressiveVirtualHTMLGenerator:
                 this.lastScrollHeight = 0; // Track scroll height to prevent infinite loops
                 this.loadedSegments = []; // Track loaded message ranges
                 this.isRendering = false; // Track when we're inside renderMessages() to ignore scroll events
-                
+
                 // Time-based scrollbar properties
                 this.firstTimestamp = null;
                 this.lastTimestamp = null;
@@ -605,14 +605,14 @@ class ProgressiveVirtualHTMLGenerator:
                         throw new Error(`HTTP error! status: ${{response.status}}`);
                     }}
                     const data = await response.json();
-                    
+
                     this.firstTimestamp = new Date(data.first_timestamp);
                     this.lastTimestamp = new Date(data.last_timestamp);
                     this.totalTimeSpan = this.lastTimestamp - this.firstTimestamp;
-                    
+
                     console.log(`Time range: ${{this.firstTimestamp.toISOString()}} to ${{this.lastTimestamp.toISOString()}}`);
                     console.log(`Total time span: ${{this.totalTimeSpan / (1000 * 60 * 60 * 24)}} days`);
-                    
+
                     this.updateTimeScrollbar(0, this.firstTimestamp);
                     this.renderTimeMarks();
                 }} catch (error) {{
@@ -625,35 +625,43 @@ class ProgressiveVirtualHTMLGenerator:
                     return;
                 }}
 
+                // Calculate time span in days
                 const totalDays = this.totalTimeSpan / (1000 * 60 * 60 * 24);
-                const marks = [];
-                
-                // Calculate appropriate interval based on time span
-                let intervalDays;
-                let intervalMonths = 0;
-                
-                if (totalDays <= 7) {{
-                    // Daily marks for short time spans (1 week or less)
-                    intervalDays = 1;
-                }} else if (totalDays <= 60) {{
-                    // Weekly marks for medium time spans (up to 2 months)
+
+                // Determine interval based on total time span
+                let intervalMonths = 1;
+                let intervalDays = 0;
+
+                if (totalDays < 30) {{
+                    // Less than 1 month: mark every week
                     intervalDays = 7;
-                }} else if (totalDays <= 365) {{
-                    // Monthly marks for longer time spans (up to 1 year)
+                    intervalMonths = 0;
+                }} else if (totalDays < 180) {{
+                    // 1-6 months: mark every month
                     intervalMonths = 1;
-                }} else {{
-                    // Quarterly marks for very long time spans
+                }} else if (totalDays < 365) {{
+                    // 6-12 months: mark every 2 months
+                    intervalMonths = 2;
+                }} else if (totalDays < 730) {{
+                    // 1-2 years: mark every 3 months
                     intervalMonths = 3;
+                }} else {{
+                    // More than 2 years: mark every 6 months
+                    intervalMonths = 6;
                 }}
-                
+
+                console.log(`Rendering time marks with interval: ${{intervalMonths > 0 ? intervalMonths + ' months' : intervalDays + ' days'}}`);
+
                 // Generate marks
-                const currentMark = new Date(this.firstTimestamp);
-                
+                const marks = [];
+                let currentMark = new Date(this.firstTimestamp);
+
                 if (intervalMonths > 0) {{
-                    // Add marks at month intervals
+                    // Round to start of month
                     currentMark.setDate(1);
                     currentMark.setHours(0, 0, 0, 0);
-                    
+
+                    // Add marks at month intervals
                     while (currentMark <= this.lastTimestamp) {{
                         if (currentMark >= this.firstTimestamp) {{
                             marks.push(new Date(currentMark));
@@ -663,7 +671,7 @@ class ProgressiveVirtualHTMLGenerator:
                 }} else {{
                     // Add marks at day intervals
                     currentMark.setHours(0, 0, 0, 0);
-                    
+
                     while (currentMark <= this.lastTimestamp) {{
                         if (currentMark >= this.firstTimestamp) {{
                             marks.push(new Date(currentMark));
@@ -682,7 +690,7 @@ class ProgressiveVirtualHTMLGenerator:
                     const markElement = document.createElement('div');
                     markElement.className = 'time-mark';
                     markElement.style.top = `${{percentage * 100}}%`;
-                    
+
                     // Format label based on interval
                     let label;
                     if (intervalMonths > 0) {{
@@ -698,12 +706,12 @@ class ProgressiveVirtualHTMLGenerator:
                             month: 'short'
                         }});
                     }}
-                    
+
                     const labelElement = document.createElement('span');
                     labelElement.className = 'time-mark-label';
                     labelElement.textContent = label;
                     markElement.appendChild(labelElement);
-                    
+
                     this.timeScrollbar.appendChild(markElement);
                 }});
 
@@ -731,13 +739,13 @@ class ProgressiveVirtualHTMLGenerator:
 
                 // Calculate target timestamp
                 const targetTime = new Date(this.firstTimestamp.getTime() + (percentage * this.totalTimeSpan));
-                
+
                 console.log(`Scrolling to time: ${{targetTime.toISOString()}} (${{Math.round(percentage * 100)}}%)`);
-                
+
                 // Update UI immediately
                 this.updateTimeScrollbar(percentage, targetTime);
                 this.updateTimeLabels(targetTime, percentage);
-                
+
                 // Load messages starting from this timestamp
                 this.isScrollingFromTimeScrollbar = true;
                 try {{
@@ -746,20 +754,20 @@ class ProgressiveVirtualHTMLGenerator:
                         throw new Error(`HTTP error! status: ${{response.status}}`);
                     }}
                     const data = await response.json();
-                    
+
                     if (data.messages && data.messages.length > 0) {{
                         // Clear existing messages and load from this point
                         this.allMessages = data.messages;
                         this.currentOffset = data.offset + data.messages.length;
                         this.filteredMessages = [...this.allMessages];
-                        
+
                         // Reset the isEndOfFile flag since we're jumping to a new position
                         this.isEndOfFile = false;
-                        
+
                         if (data.total_messages && !this.serverTotalMessages) {{
                             this.serverTotalMessages = data.total_messages;
                         }}
-                        
+
                         // Reset rendering and scroll to top of new messages
                         this.messagesContainer.scrollTop = 0;
                         this.renderMessages();
@@ -776,11 +784,11 @@ class ProgressiveVirtualHTMLGenerator:
                 const scrollbarHeight = this.timeScrollbar.offsetHeight;
                 const thumbHeight = 30; // minimum height
                 const maxThumbTop = scrollbarHeight - thumbHeight;
-                
+
                 const thumbTop = Math.max(0, Math.min(percentage * maxThumbTop, maxThumbTop));
                 this.timeScrollbarThumb.style.top = `${{thumbTop}}px`;
                 this.timeScrollbarThumb.style.height = `${{thumbHeight}}px`;
-                
+
                 // Update thumb text with date if provided
                 if (currentTime) {{
                     const dateStr = currentTime.toLocaleDateString('ca-ES', {{
@@ -800,12 +808,12 @@ class ProgressiveVirtualHTMLGenerator:
                     day: 'numeric'
                 }});
                 this.currentTimeLabel.textContent = dateStr;
-                
+
                 // Calculate time elapsed
                 const timeElapsed = currentTime - this.firstTimestamp;
                 const daysElapsed = Math.floor(timeElapsed / (1000 * 60 * 60 * 24));
                 const totalDays = Math.floor(this.totalTimeSpan / (1000 * 60 * 60 * 24));
-                
+
                 this.timeProgress.textContent = `${{daysElapsed}} / ${{totalDays}} dies`;
             }}
 
@@ -818,10 +826,10 @@ class ProgressiveVirtualHTMLGenerator:
                 const container = this.messagesContainer;
                 const scrollTop = container.scrollTop;
                 const itemHeight = 100; // Approximate message height
-                
+
                 const visibleIndex = Math.floor(scrollTop / itemHeight);
                 const visibleMessage = this.filteredMessages[Math.min(visibleIndex, this.filteredMessages.length - 1)];
-                
+
                 if (!visibleMessage || !visibleMessage.timestamp) {{
                     return;
                 }}
@@ -830,7 +838,7 @@ class ProgressiveVirtualHTMLGenerator:
                 const messageTime = new Date(visibleMessage.timestamp);
                 const timeElapsed = messageTime - this.firstTimestamp;
                 const percentage = Math.max(0, Math.min(1, timeElapsed / this.totalTimeSpan));
-                
+
                 // Update scrollbar position
                 this.updateTimeScrollbar(percentage, messageTime);
                 this.updateTimeLabels(messageTime, percentage);
@@ -858,10 +866,10 @@ class ProgressiveVirtualHTMLGenerator:
                         // Use data.offset from server response to ensure accuracy
                         const segmentStart = data.offset;
                         const segmentEnd = data.offset + data.messages.length;
-                        
+
                         // Add to loaded segments (merge if overlapping with existing segments)
                         this.addLoadedSegment(segmentStart, segmentEnd);
-                        
+
                         this.allMessages.push(...data.messages);
                         this.currentOffset += data.messages.length;
                         this.totalMessages += data.messages.length;
@@ -901,14 +909,14 @@ class ProgressiveVirtualHTMLGenerator:
                 // Add a new loaded segment and merge with existing overlapping segments
                 // Add the new segment to the list
                 this.loadedSegments.push({{ start, end }});
-                
+
                 // Sort segments by start position
                 this.loadedSegments.sort((a, b) => a.start - b.start);
-                
+
                 // Merge all overlapping or adjacent segments
                 const mergedSegments = [];
                 let currentSegment = null;
-                
+
                 for (const segment of this.loadedSegments) {{
                     if (!currentSegment) {{
                         // First segment
@@ -922,12 +930,12 @@ class ProgressiveVirtualHTMLGenerator:
                         currentSegment = {{ start: segment.start, end: segment.end }};
                     }}
                 }}
-                
+
                 // Don't forget to add the last segment
                 if (currentSegment) {{
                     mergedSegments.push(currentSegment);
                 }}
-                
+
                 this.loadedSegments = mergedSegments;
                 console.log('Loaded segments:', this.loadedSegments);
             }}
@@ -936,7 +944,7 @@ class ProgressiveVirtualHTMLGenerator:
                 // Update the loaded segments tracking
                 // Note: We track segments based on message indices in the TOTAL chat
                 // The allMessages array contains messages we've loaded, but they might not be continuous
-                
+
                 if (!this.serverTotalMessages || this.serverTotalMessages === 0) {{
                     return;
                 }}
@@ -950,8 +958,8 @@ class ProgressiveVirtualHTMLGenerator:
                     return;
                 }}
 
-                // Calculate number of segments to display (e.g., 100 segments for the whole chat)
-                const numSegments = 100;
+                // Calculate number of segments to display (e.g., 200 segments for the whole chat)
+                const numSegments = 200;
                 const messagesPerSegment = Math.ceil(this.serverTotalMessages / numSegments);
 
                 this.segmentIndicator.innerHTML = '';
@@ -960,15 +968,15 @@ class ProgressiveVirtualHTMLGenerator:
                 for (let i = 0; i < numSegments; i++) {{
                     const segmentStart = i * messagesPerSegment;
                     const segmentEnd = Math.min((i + 1) * messagesPerSegment, this.serverTotalMessages);
-                    
+
                     // Check if this segment is loaded
                     const isLoaded = this.isSegmentLoaded(segmentStart, segmentEnd);
-                    
+
                     const segment = document.createElement('div');
                     segment.className = `segment ${{isLoaded ? 'loaded' : 'unloaded'}}`;
                     segment.style.flex = '1';
                     segment.title = `Messages ${{segmentStart}}-${{segmentEnd}}: ${{isLoaded ? 'Loaded' : 'Not loaded'}}`;
-                    
+
                     this.segmentIndicator.appendChild(segment);
                 }}
             }}
@@ -1013,7 +1021,7 @@ class ProgressiveVirtualHTMLGenerator:
             renderMessages() {{
                 // Set flag to ignore scroll events triggered by this method
                 this.isRendering = true;
-                
+
                 // Save current scroll position
                 const currentScrollTop = this.messagesContainer.scrollTop;
                 const currentScrollHeight = this.messagesContainer.scrollHeight;
@@ -1059,12 +1067,12 @@ class ProgressiveVirtualHTMLGenerator:
 
                 // Update last scroll height to prevent infinite loops
                 this.lastScrollHeight = this.messagesContainer.scrollHeight;
-                
+
                 // Update time scrollbar after rendering
                 if (this.firstTimestamp && this.lastTimestamp && !this.isScrollingFromTimeScrollbar) {{
                     this.updateTimeScrollbarFromMessages();
                 }}
-                
+
                 // Clear flag - we're done rendering
                 this.isRendering = false;
             }}
@@ -1141,12 +1149,17 @@ class ProgressiveVirtualHTMLGenerator:
                 }} else if (attachment.type === 'audio') {{
                     return `
                         <div class="attachment">
-                            <div class="attachment-placeholder" onclick="progressiveChat.loadAttachment('${{attachmentId}}', '${{attachment.name}}', 'audio')">
-                                <div class="icon">🎵</div>
-                                <div class="text">Click per carregar àudio</div>
-                                <div class="subtext">${{attachment.name}} (${{attachment.size}})</div>
+                            <audio controls preload="none" style="width: 100%;" src="/api/attachment/${{attachment.name}}">
+                                El teu navegador no suporta el tag d'àudio.
+                            </audio>
+                            <div class="attachment-file">
+                                <span class="file-icon">🎵</span>
+                                <div class="file-info">
+                                    <div class="file-name">${{attachment.name}}</div>
+                                    <div class="file-size">${{attachment.size}}</div>
+                                </div>
+                                <a href="/api/attachment/${{attachment.name}}" class="download-link" target="_blank">Descarregar</a>
                             </div>
-                            <div id="${{attachmentId}}" style="display: none;"></div>
                         </div>
                     `;
                 }} else {{
@@ -1243,7 +1256,7 @@ class ProgressiveVirtualHTMLGenerator:
                 if (this.isRendering) {{
                     return;
                 }}
-                
+
                 this.showScrollIndicator();
                 this.updateScrollInfo();
 
