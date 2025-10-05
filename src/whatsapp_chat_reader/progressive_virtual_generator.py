@@ -247,7 +247,6 @@ class ProgressiveVirtualHTMLGenerator:
             .segment {
                 height: 100%;
                 transition: background-color 0.3s ease;
-                border-right: 1px solid #fff;
                 box-sizing: border-box;
             }
 
