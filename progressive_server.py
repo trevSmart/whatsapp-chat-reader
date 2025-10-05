@@ -13,7 +13,7 @@ from pathlib import Path
 from flask import Flask, jsonify, request, send_file, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
-
+import logging
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
@@ -21,6 +21,9 @@ from whatsapp_chat_reader.parser import WhatsAppParser
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
+
+# Configure logging to output error tracebacks to stderr
+logging.basicConfig(level=logging.INFO)
 
 class ProgressiveChatServer:
     def __init__(self, chat_file_path: str, attachment_dir: str = None):
@@ -305,7 +308,8 @@ def get_messages_by_time():
         })
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        logging.exception("Unhandled exception in get_messages_by_time")
+        return jsonify({'error': 'An internal error has occurred.'}), 500
 
 @app.route('/')
 def serve_html():
