@@ -390,8 +390,9 @@ class ProgressiveVirtualHTMLGenerator:
                 this.allMessages = [];
                 this.filteredMessages = [];
                 this.loadedAttachments = new Map();
-                this.loadedAttachmentsState = new Map();
+                this.loadedAttachmentsContent = new Map(); // Store actual content (data URLs)
                 this.scrollTimeout = null;
+                this.lastScrollHeight = 0; // Track scroll height to prevent infinite loops
 
                 // Configuration
                 this.chatFileUrl = '{chat_file_path}';
@@ -519,9 +520,6 @@ class ProgressiveVirtualHTMLGenerator:
                 const currentScrollTop = this.messagesContainer.scrollTop;
                 const currentScrollHeight = this.messagesContainer.scrollHeight;
 
-                // Save loaded attachments state before clearing
-                this.saveLoadedAttachmentsState();
-
                 this.messagesContainer.innerHTML = '';
 
                 if (this.filteredMessages.length === 0) {{
@@ -545,7 +543,7 @@ class ProgressiveVirtualHTMLGenerator:
                 // Render visible messages
                 for (let i = startIndex; i < endIndex; i++) {{
                     const message = this.filteredMessages[i];
-                    const messageElement = this.createMessageElement(message);
+                    const messageElement = this.createMessageElement(message, i);
                     this.messagesContainer.appendChild(messageElement);
                 }}
 
@@ -554,14 +552,17 @@ class ProgressiveVirtualHTMLGenerator:
                 bottomSpacer.style.height = `${{(this.filteredMessages.length - endIndex) * itemHeight}}px`;
                 this.messagesContainer.appendChild(bottomSpacer);
 
-                // Restore loaded attachments state
-                this.restoreLoadedAttachmentsState();
+                // Restore loaded attachments after rendering
+                this.restoreLoadedAttachments();
 
                 // Restore scroll position
                 this.messagesContainer.scrollTop = currentScrollTop;
+                
+                // Update last scroll height to prevent infinite loops
+                this.lastScrollHeight = this.messagesContainer.scrollHeight;
             }}
 
-            createMessageElement(message) {{
+            createMessageElement(message, messageIndex) {{
                 const messageDiv = document.createElement('div');
                 messageDiv.className = `message${{message.is_system_message ? ' system' : ''}}`;
 
@@ -570,8 +571,8 @@ class ProgressiveVirtualHTMLGenerator:
                 let attachmentsHtml = '';
                 if (message.attachments && message.attachments.length > 0) {{
                     attachmentsHtml = '<div class="attachments">';
-                    message.attachments.forEach(attachment => {{
-                        attachmentsHtml += this.createAttachmentHtml(attachment);
+                    message.attachments.forEach((attachment, attachmentIndex) => {{
+                        attachmentsHtml += this.createAttachmentHtml(attachment, messageIndex, attachmentIndex);
                     }});
                     attachmentsHtml += '</div>';
                 }}
@@ -590,7 +591,7 @@ class ProgressiveVirtualHTMLGenerator:
                 return messageDiv;
             }}
 
-            createAttachmentHtml(attachment) {{
+            createAttachmentHtml(attachment, messageIndex, attachmentIndex) {{
                 if (!attachment.exists) {{
                     return `
                         <div class="attachment">
@@ -605,8 +606,8 @@ class ProgressiveVirtualHTMLGenerator:
                     `;
                 }}
 
-                // Create placeholder for lazy loading
-                const attachmentId = `attachment_${{Math.random().toString(36).substr(2, 9)}}`;
+                // Create stable attachment ID based on message index and attachment index
+                const attachmentId = `attachment_${{messageIndex}}_${{attachmentIndex}}`;
 
                 if (attachment.type === 'image') {{
                     return `
@@ -669,27 +670,41 @@ class ProgressiveVirtualHTMLGenerator:
 
                     reader.onload = () => {{
                         const container = document.getElementById(attachmentId);
-                        const placeholder = container.previousElementSibling;
-
-                        if (type === 'image') {{
-                            container.innerHTML = `<img src="${{reader.result}}" alt="Attachment" style="max-width: 100%; height: auto;" />`;
-                        }} else if (type === 'video') {{
-                            container.innerHTML = `<video controls style="max-width: 100%; height: auto;"><source src="${{reader.result}}" type="video/mp4">El teu navegador no suporta el tag de vídeo.</video>`;
-                        }} else if (type === 'audio') {{
-                            container.innerHTML = `<audio controls style="width: 100%;"><source src="${{reader.result}}" type="audio/mpeg">El teu navegador no suporta el tag d'àudio.</audio>`;
+                        const placeholder = container?.previousElementSibling;
+                        
+                        if (!container) {{
+                            console.warn(`Container ${{attachmentId}} not found`);
+                            return;
                         }}
 
+                        let contentHtml = '';
+                        if (type === 'image') {{
+                            contentHtml = `<img src="${{reader.result}}" alt="Attachment" style="max-width: 100%; height: auto;" />`;
+                        }} else if (type === 'video') {{
+                            contentHtml = `<video controls style="max-width: 100%; height: auto;"><source src="${{reader.result}}" type="video/mp4">El teu navegador no suporta el tag de vídeo.</video>`;
+                        }} else if (type === 'audio') {{
+                            contentHtml = `<audio controls style="width: 100%;"><source src="${{reader.result}}" type="audio/mpeg">El teu navegador no suporta el tag d'àudio.</audio>`;
+                        }}
+
+                        container.innerHTML = contentHtml;
                         container.style.display = 'block';
-                        placeholder.style.display = 'none';
+                        if (placeholder) {{
+                            placeholder.style.display = 'none';
+                        }}
+                        
+                        // Store both the flag and the actual content for restoration
                         this.loadedAttachments.set(attachmentId, true);
+                        this.loadedAttachmentsContent.set(attachmentId, {{ content: contentHtml, type: type }});
                     }};
 
                     reader.readAsDataURL(blob);
                 }} catch (error) {{
                     console.error('Error loading attachment:', error);
                     const container = document.getElementById(attachmentId);
-                    container.innerHTML = '<div class="error-message">Error carregant adjunt</div>';
-                    container.style.display = 'block';
+                    if (container) {{
+                        container.innerHTML = '<div class="error-message">Error carregant adjunt</div>';
+                        container.style.display = 'block';
+                    }}
                 }}
             }}
 
@@ -698,32 +713,19 @@ class ProgressiveVirtualHTMLGenerator:
                 return text.replace(urlPattern, '<a href="$&" class="url-link" target="_blank">$&</a>');
             }}
 
-            saveLoadedAttachmentsState() {{
-                // Save which attachments were loaded before clearing the DOM
-                this.loadedAttachmentsState = new Map();
-                const attachmentContainers = this.messagesContainer.querySelectorAll('[id^="attachment_"]');
-
-                attachmentContainers.forEach(container => {{
-                    if (container.style.display !== 'none') {{
-                        const attachmentName = container.querySelector('img, video, audio')?.src ||
-                                             container.querySelector('a[href*="/api/attachment/"]')?.href;
-                        if (attachmentName) {{
-                            this.loadedAttachmentsState.set(container.id, attachmentName);
-                        }}
-                    }}
-                }});
-            }}
-
-            restoreLoadedAttachmentsState() {{
+            restoreLoadedAttachments() {{
                 // Restore loaded attachments after DOM is recreated
-                this.loadedAttachmentsState.forEach((attachmentName, containerId) => {{
-                    const container = document.getElementById(containerId);
+                this.loadedAttachmentsContent.forEach((data, attachmentId) => {{
+                    const container = document.getElementById(attachmentId);
                     if (container) {{
-                        // Hide placeholder and show loaded content
+                        // Restore the content
+                        container.innerHTML = data.content;
+                        container.style.display = 'block';
+                        
+                        // Hide placeholder
                         const placeholder = container.previousElementSibling;
                         if (placeholder && placeholder.classList.contains('attachment-placeholder')) {{
                             placeholder.style.display = 'none';
-                            container.style.display = 'block';
                         }}
                     }}
                 }});
@@ -759,8 +761,15 @@ class ProgressiveVirtualHTMLGenerator:
                 const scrollHeight = container.scrollHeight;
                 const clientHeight = container.clientHeight;
 
-                // Load more when 80% scrolled
-                if (scrollTop + clientHeight >= scrollHeight * 0.8 && !this.isLoading) {{
+                // Only trigger load if:
+                // 1. Not already loading
+                // 2. Not at end of file
+                // 3. Scroll position is at 80% or more
+                // 4. Scroll height has not changed since last check (prevents load during rendering)
+                if (!this.isLoading && 
+                    !this.isEndOfFile && 
+                    scrollTop + clientHeight >= scrollHeight * 0.8 &&
+                    scrollHeight === this.lastScrollHeight) {{
                     console.log('Scroll ended, loading more messages...');
                     this.loadMessagesChunk();
                 }}
